@@ -47,12 +47,12 @@ public class MydataPolicy {
 
 		if (null != policyId && null != actionString && null != conditionsBlock && null != decisionBlock && null != target) {
 			mydataPolicy = String.format(
-					"<policy id='%1$s' description='This is the generated usage policy for %1$s. ' xmlns='http://www.mydata-control.de/4.0/mydataLanguage' xmlns:tns='http://www.mydata-control.de/4.0/mydataLanguage' xmlns:parameter='http://www.mydata-control.de/4.0/parameter' xmlns:pip='http://www.mydata-control.de/4.0/pip' xmlns:function='http://www.mydata-control.de/4.0/function' xmlns:event='http://www.mydata-control.de/4.0/event' xmlns:constant='http://www.mydata-control.de/4.0/constant' xmlns:variable='http://www.mydata-control.de/4.0/variable' xmlns:variableDeclaration='http://www.mydata-control.de/4.0/variableDeclaration' xmlns:valueChanged='http://www.mydata-control.de/4.0/valueChanged' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:date='http://www.mydata-control.de/4.0/date' xmlns:time='http://www.mydata-control.de/4.0/time' xmlns:day='http://www.mydata-control.de/4.0/day'>" + System.lineSeparator()
-							+ "  <mechanism event='urn:action:ids:%2$s'>" + System.lineSeparator() 
-							+ "    <if>" + System.lineSeparator()
+					"<policy id='%1$s' description='This is the generated usage policy for %1$s. ' xmlns='http://www.mydata-control.de/4.0/mydataLanguage' xmlns:tns='http://www.mydata-control.de/4.0/mydataLanguage' xmlns:parameter='http://www.mydata-control.de/4.0/parameter' xmlns:pip='http://www.mydata-control.de/4.0/pip' xmlns:function='http://www.mydata-control.de/4.0/function' xmlns:event='http://www.mydata-control.de/4.0/event' xmlns:constant='http://www.mydata-control.de/4.0/constant' xmlns:variable='http://www.mydata-control.de/4.0/variable' xmlns:variableDeclaration='http://www.mydata-control.de/4.0/variableDeclaration' xmlns:valueChanged='http://www.mydata-control.de/4.0/valueChanged' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:date='http://www.mydata-control.de/4.0/date' xmlns:time='http://www.mydata-control.de/4.0/time' xmlns:day='http://www.mydata-control.de/4.0/day'>\n"
+							+ "  <mechanism event='urn:action:ids:%2$s'>\n" 
+							+ "    <if>\n"
 							+ "%3$s"
 							+ "%4$s"
-							+ "  </mechanism>" + System.lineSeparator() + "</policy>",
+							+ "  </mechanism>\n" + "</policy>",
 					policyId, actionString, conditionsBlock, decisionBlock, target);
 		}
 		return mydataPolicy;

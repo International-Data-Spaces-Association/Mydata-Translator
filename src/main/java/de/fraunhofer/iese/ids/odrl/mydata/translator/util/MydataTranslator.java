@@ -285,13 +285,12 @@ public class MydataTranslator implements ITranslator {
 								 params.add(beginParam);
 								 break;
 							 case HASDURATION:
-								 Parameter targetDataUriParam = new Parameter(ParameterType.STRING, "targetDataUri", mydataPolicy.getTarget());
-								 Parameter durationParam = new Parameter(ParameterType.STRING, "duration", entity.getValue());
-								 params.add(targetDataUriParam);
-								 params.add(durationParam);
+								 Duration d = BuildMydataPolicyUtils.getDurationFromPeriodValue(entity.getValue());
+								 Parameter valueParam = new Parameter(ParameterType.NUMBER, "value", String.valueOf(d.getValue()));
+								 Parameter unitParam = new Parameter(ParameterType.STRING, "value", entity.getTimeUnit().toString());
+								 params.add(valueParam);
+								 params.add(unitParam);
 								 break;
-						default:
-							break;
 						 }
 					 }
 				 } else if (odrlRefinement.getLeftOperand().equals(LeftOperand.DATE_TIME)) {
