@@ -109,7 +109,9 @@ public class MydataTranslator implements ITranslator {
 	     mydataPolicy = this.paymentConstraint(mydataPolicy, odrlConstraint);
 	    } else if (odrlConstraint.getLeftOperand().equals(LeftOperand.SYSTEM)) {
 	     mydataPolicy = this.systemConstraint(mydataPolicy, odrlConstraint);
-	    } else if (odrlConstraint.getLeftOperand().equals(LeftOperand.POLICY_EVALUATION_TIME)) {
+	    }else if (odrlConstraint.getLeftOperand().equals(LeftOperand.APPLICATION)) {
+			mydataPolicy = this.applicationConstraint(mydataPolicy, odrlConstraint);
+		} else if (odrlConstraint.getLeftOperand().equals(LeftOperand.POLICY_EVALUATION_TIME)) {
 	     mydataPolicy = this.timeIntervalConstraint(mydataPolicy, odrlConstraint);
 	    } else if (odrlConstraint.getLeftOperand().equals(LeftOperand.COUNT)) {
 	     List<Parameter> countParams = Collections.emptyList();
@@ -377,20 +379,36 @@ public class MydataTranslator implements ITranslator {
  }
 
  private MydataPolicy systemConstraint(MydataPolicy mydataPolicy, Condition systemConstraint) {
-  if(null != systemConstraint)
-  {
-   Parameter systemParam = new Parameter(ParameterType.STRING,LeftOperand.SYSTEM.getMydataLeftOperand()+"-uri", systemConstraint.getRightOperand().getValue());
+		if(null != systemConstraint)
+		{
+			Parameter systemParam = new Parameter(ParameterType.STRING,LeftOperand.SYSTEM.getMydataLeftOperand()+"-uri", systemConstraint.getRightOperand().getValue());
 
-   List<Parameter> pipParams = new ArrayList<>();
-   pipParams.add(systemParam);
-   PIPBoolean systemPipBoolean = new PIPBoolean(this.solution, LeftOperand.SYSTEM, pipParams);
+			List<Parameter> pipParams = new ArrayList<>();
+			pipParams.add(systemParam);
+			PIPBoolean systemPipBoolean = new PIPBoolean(this.solution, LeftOperand.SYSTEM, pipParams);
 
-   List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
-   pips.add(systemPipBoolean);
-   mydataPolicy.setPipBooleans(pips);
-  }
-  return mydataPolicy;
- }
+			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
+			pips.add(systemPipBoolean);
+			mydataPolicy.setPipBooleans(pips);
+		}
+		return mydataPolicy;
+	}
+
+	private MydataPolicy applicationConstraint(MydataPolicy mydataPolicy, Condition applicationConstraint) {
+		if(null != applicationConstraint)
+		{
+			Parameter applicationParam = new Parameter(ParameterType.STRING,LeftOperand.APPLICATION.getMydataLeftOperand()+"-uri", applicationConstraint.getRightOperand().getValue());
+
+			List<Parameter> pipParams = new ArrayList<>();
+			pipParams.add(applicationParam);
+			PIPBoolean applicationPipBoolean = new PIPBoolean(this.solution, LeftOperand.APPLICATION, pipParams);
+
+			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
+			pips.add(applicationPipBoolean);
+			mydataPolicy.setPipBooleans(pips);
+		}
+		return mydataPolicy;
+	}
 
  private MydataPolicy paymentConstraint(MydataPolicy mydataPolicy, Condition paymentConstraint) {
   if(null != paymentConstraint)
