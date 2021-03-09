@@ -5,19 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.Constant;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.Count;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.DateTime;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.Event;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.ExecuteAction;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.FixedTime;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.Modify;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.MydataCondition;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.MydataPolicy;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.PIPBoolean;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.Parameter;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.ParameterType;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.Timer;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.*;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.*;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ActionType;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.IntervalCondition;
@@ -46,6 +34,15 @@ public class MydataTranslator implements ITranslator {
 	  this.solution = BuildMydataPolicyUtils.getSolution(odrlPolicy);
 	  MydataPolicy mydataPolicy = BuildMydataPolicyUtils.buildPolicy(odrlPolicy,
 	          odrlPolicy.getRules().get(0).getAction().getType(), odrlPolicy.getRules().get(0).getType(), this.solution);
+	  if(!odrlPolicy.getRules().isEmpty())
+	  {
+		  //set mydataPolicy target
+		  String target = "";
+		  if (null != odrlPolicy.getRules().get(0).getTarget()) {
+			  target = odrlPolicy.getRules().get(0).getTarget().toString();
+		  }
+		  this.targetConstraint(mydataPolicy, target);
+	  }
 
 	  if(odrlPolicy.getRules().get(0).getType().equals(RuleType.OBLIGATION)){
 
@@ -357,6 +354,24 @@ public class MydataTranslator implements ITranslator {
   }
   return mydataPolicy;
  }
+
+private MydataPolicy targetConstraint(MydataPolicy mydataPolicy, String target) {
+	if(null != target)
+	{
+		// get conditions
+		Event targetFirstOperand = new Event(ParameterType.STRING, EventParameter.TARGET.getEventParameter(), null);
+		Constant targetSecondOperand = new Constant(ParameterType.STRING, target);
+		MydataCondition targetCondition = new MydataCondition(targetFirstOperand, Operator.EQ, targetSecondOperand);
+
+		//set conditions
+		mydataPolicy.setTarget(target);
+
+		List<MydataCondition> cons = mydataPolicy.getConditions();
+		cons.add(targetCondition);
+		mydataPolicy.setConditions(cons);
+	}
+	return mydataPolicy;
+}
 
  private MydataPolicy purposeConstraint(MydataPolicy mydataPolicy, Condition purposeConstraint) {
   if(null != purposeConstraint)

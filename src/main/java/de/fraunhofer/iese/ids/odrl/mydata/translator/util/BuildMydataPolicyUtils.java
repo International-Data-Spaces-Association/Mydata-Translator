@@ -31,12 +31,6 @@ public class BuildMydataPolicyUtils {
 		//set mydataPolicy decision
 		RuleType decision = ruleType;
 
-		//set mydataPolicy target
-		String target = "";
-		if (null != odrlPolicy.getTarget()) {
-			target = odrlPolicy.getTarget().toString();
-		}
-
 		//set mydataPolicy id
 		String pid = "";
 		if (null != odrlPolicy.getPolicyId()) {
@@ -49,11 +43,6 @@ public class BuildMydataPolicyUtils {
 //			consumer = odrlPolicy.getConsumer().getName();
 //		}
 
-		// get conditions
-		Event targetFirstOperand = new Event(ParameterType.STRING, EventParameter.TARGET.getEventParameter(), null);
-		Constant targetSecondOperand = new Constant(ParameterType.STRING, target);
-		MydataCondition targetCondition = new MydataCondition(targetFirstOperand, Operator.EQ, targetSecondOperand);
-
 //		MydataCondition consumerCondition = new MydataCondition();
 //		if (!consumer.isEmpty() && odrlPolicy.isProviderSide()) {
 //			Event consumerFirstOperand = new Event(ParameterType.STRING, EventParameter.CONSUMER.getEventParameter(), "name");
@@ -64,11 +53,11 @@ public class BuildMydataPolicyUtils {
 
 		// create MYDATA MydataPolicy
 		MydataPolicy mydataPolicy = new MydataPolicy(solution, pid, action, decision, false, null);
-		List<MydataCondition> cons = mydataPolicy.getConditions();
-		cons.add(targetCondition);
+		//List<MydataCondition> cons = mydataPolicy.getConditions();
+		//cons.add(targetCondition);
 //		cons.add(consumerCondition);
-		mydataPolicy.setConditions(cons);
-		mydataPolicy.setTarget(target);
+		//mydataPolicy.setConditions(cons);
+		//mydataPolicy.setTarget(target);
 
 		return mydataPolicy;
 	}
