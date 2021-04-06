@@ -108,6 +108,8 @@ public class MydataTranslator implements ITranslator {
 	     mydataPolicy = this.systemConstraint(mydataPolicy, odrlConstraint);
 	    }else if (odrlConstraint.getLeftOperand().equals(LeftOperand.APPLICATION)) {
 			mydataPolicy = this.applicationConstraint(mydataPolicy, odrlConstraint);
+		}else if (odrlConstraint.getLeftOperand().equals(LeftOperand.CONNECTOR)) {
+			mydataPolicy = this.connectorConstraint(mydataPolicy, odrlConstraint);
 		} else if (odrlConstraint.getLeftOperand().equals(LeftOperand.POLICY_EVALUATION_TIME)) {
 	     mydataPolicy = this.timeIntervalConstraint(mydataPolicy, odrlConstraint);
 	    } else if (odrlConstraint.getLeftOperand().equals(LeftOperand.COUNT)) {
@@ -420,6 +422,22 @@ private MydataPolicy targetConstraint(MydataPolicy mydataPolicy, String target) 
 
 			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
 			pips.add(applicationPipBoolean);
+			mydataPolicy.setPipBooleans(pips);
+		}
+		return mydataPolicy;
+	}
+
+	private MydataPolicy connectorConstraint(MydataPolicy mydataPolicy, Condition connectorConstraint) {
+		if(null != connectorConstraint)
+		{
+			Parameter connectorParam = new Parameter(ParameterType.STRING,LeftOperand.CONNECTOR.getMydataLeftOperand()+"-uri", connectorConstraint.getRightOperand().getValue());
+
+			List<Parameter> pipParams = new ArrayList<>();
+			pipParams.add(connectorParam);
+			PIPBoolean connectorPipBoolean = new PIPBoolean(this.solution, LeftOperand.CONNECTOR, pipParams);
+
+			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
+			pips.add(connectorPipBoolean);
 			mydataPolicy.setPipBooleans(pips);
 		}
 		return mydataPolicy;
