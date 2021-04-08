@@ -110,6 +110,8 @@ public class MydataTranslator implements ITranslator {
 			mydataPolicy = this.applicationConstraint(mydataPolicy, odrlConstraint);
 		}else if (odrlConstraint.getLeftOperand().equals(LeftOperand.CONNECTOR)) {
 			mydataPolicy = this.connectorConstraint(mydataPolicy, odrlConstraint);
+		} else if (odrlConstraint.getLeftOperand().equals(LeftOperand.SECURITY_LEVEL)) {
+			mydataPolicy = this.securityLevelConstraint(mydataPolicy, odrlConstraint);
 		} else if (odrlConstraint.getLeftOperand().equals(LeftOperand.STATE)) {
 			mydataPolicy = this.stateConstraint(mydataPolicy, odrlConstraint);
 		} else if (odrlConstraint.getLeftOperand().equals(LeftOperand.ROLE)) {
@@ -442,6 +444,22 @@ private MydataPolicy targetConstraint(MydataPolicy mydataPolicy, String target) 
 
 			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
 			pips.add(connectorPipBoolean);
+			mydataPolicy.setPipBooleans(pips);
+		}
+		return mydataPolicy;
+	}
+
+	private MydataPolicy securityLevelConstraint(MydataPolicy mydataPolicy, Condition securityLevelConstraint) {
+		if(null != securityLevelConstraint)
+		{
+			Parameter securityLevelParam = new Parameter(ParameterType.STRING,LeftOperand.SECURITY_LEVEL.getMydataLeftOperand(), securityLevelConstraint.getRightOperand().getValue());
+
+			List<Parameter> pipParams = new ArrayList<>();
+			pipParams.add(securityLevelParam);
+			PIPBoolean securityLevelPipBoolean = new PIPBoolean(this.solution, LeftOperand.SECURITY_LEVEL, pipParams);
+
+			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
+			pips.add(securityLevelPipBoolean);
 			mydataPolicy.setPipBooleans(pips);
 		}
 		return mydataPolicy;
