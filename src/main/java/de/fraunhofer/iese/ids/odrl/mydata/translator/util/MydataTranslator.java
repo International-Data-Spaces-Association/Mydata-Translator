@@ -110,7 +110,11 @@ public class MydataTranslator implements ITranslator {
 			mydataPolicy = this.applicationConstraint(mydataPolicy, odrlConstraint);
 		}else if (odrlConstraint.getLeftOperand().equals(LeftOperand.CONNECTOR)) {
 			mydataPolicy = this.connectorConstraint(mydataPolicy, odrlConstraint);
-		} else if (odrlConstraint.getLeftOperand().equals(LeftOperand.POLICY_EVALUATION_TIME)) {
+		} else if (odrlConstraint.getLeftOperand().equals(LeftOperand.STATE)) {
+			mydataPolicy = this.stateConstraint(mydataPolicy, odrlConstraint);
+		} else if (odrlConstraint.getLeftOperand().equals(LeftOperand.ROLE)) {
+			mydataPolicy = this.roleConstraint(mydataPolicy, odrlConstraint);
+		}else if (odrlConstraint.getLeftOperand().equals(LeftOperand.POLICY_EVALUATION_TIME)) {
 	     mydataPolicy = this.timeIntervalConstraint(mydataPolicy, odrlConstraint);
 	    } else if (odrlConstraint.getLeftOperand().equals(LeftOperand.COUNT)) {
 	     List<Parameter> countParams = Collections.emptyList();
@@ -438,6 +442,38 @@ private MydataPolicy targetConstraint(MydataPolicy mydataPolicy, String target) 
 
 			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
 			pips.add(connectorPipBoolean);
+			mydataPolicy.setPipBooleans(pips);
+		}
+		return mydataPolicy;
+	}
+
+	private MydataPolicy stateConstraint(MydataPolicy mydataPolicy, Condition stateConstraint) {
+		if(null != stateConstraint)
+		{
+			Parameter stateParam = new Parameter(ParameterType.STRING,LeftOperand.STATE.getMydataLeftOperand(), stateConstraint.getRightOperand().getValue());
+
+			List<Parameter> pipParams = new ArrayList<>();
+			pipParams.add(stateParam);
+			PIPBoolean statePipBoolean = new PIPBoolean(this.solution, LeftOperand.STATE, pipParams);
+
+			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
+			pips.add(statePipBoolean);
+			mydataPolicy.setPipBooleans(pips);
+		}
+		return mydataPolicy;
+	}
+
+	private MydataPolicy roleConstraint(MydataPolicy mydataPolicy, Condition roleConstraint) {
+		if(null != roleConstraint)
+		{
+			Parameter roleParam = new Parameter(ParameterType.STRING,LeftOperand.ROLE.getMydataLeftOperand(), roleConstraint.getRightOperand().getValue());
+
+			List<Parameter> pipParams = new ArrayList<>();
+			pipParams.add(roleParam);
+			PIPBoolean rolePipBoolean = new PIPBoolean(this.solution, LeftOperand.ROLE, pipParams);
+
+			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
+			pips.add(rolePipBoolean);
 			mydataPolicy.setPipBooleans(pips);
 		}
 		return mydataPolicy;
