@@ -81,7 +81,8 @@ public class MydataPolicy {
    {
     for(Parameter p:pxp.parameters)
     {
-     if(p.name.equals("logLevel") && p.value.equals("idsc:LOG_ON_DENY")){
+     if((p.name.equals("logLevel") && p.value.equals("idsc:ON_DENY")) ||
+             (p.name.equals("notificationLevel") && p.value.equals("idsc:ON_DENY"))){
       return  "        <then>  \r\n" +
               "        <" + decision.getMydataDecision() + "/>  \r\n" +
               "        </then>  \r\n" +
