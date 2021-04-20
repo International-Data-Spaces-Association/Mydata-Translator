@@ -79,39 +79,56 @@ public class MydataPolicy {
   {
    if(null != pxp)
    {
-    for(Parameter p:pxp.parameters)
-    {
-     if((p.name.equals("logLevel") && p.value.equals("idsc:ON_DENY")) ||
-             (p.name.equals("notificationLevel") && p.value.equals("idsc:ON_DENY"))){
-      return  "        <then>  \r\n" +
-              "        <" + decision.getMydataDecision() + "/>  \r\n" +
-              "        </then>  \r\n" +
-              "      </if>   \r\n"
-              + "    <elseif>\n"
-              + "      <equals>\n" + "        <constant:string value='" + target + "'/>\n"
-              + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
-              + "      </equals>\n"
-              + "      <then>\n"
-              + "          <" + elseDecision.getMydataDecision() + "/>  \r\n"
-              + pxp.toString()
-              + "      </then>\n"
-              + "    </elseif>\n" ;
-     }else{
-      return  "        <then>  \r\n" +
-              "        <" + decision.getMydataDecision() + "/>  \r\n" +
-              pxp.toString() +
-              "        </then>  \r\n" +
-              "      </if>   \r\n"
-              + "    <elseif>\n"
-              + "      <equals>\n" + "        <constant:string value='" + target + "'/>\n"
-              + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
-              + "      </equals>\n"
-              + "      <then>\n"
-              + "          <" + elseDecision.getMydataDecision() + "/>  \r\n"
-              + "      </then>\n"
-              + "    </elseif>\n" ;
+    if(pxp.parameters != null){
+     for(Parameter p:pxp.parameters)
+     {
+      if((p.name.equals("logLevel") && p.value.equals("idsc:ON_DENY")) ||
+              (p.name.equals("notificationLevel") && p.value.equals("idsc:ON_DENY"))){
+       return  "        <then>  \r\n" +
+               "        <" + decision.getMydataDecision() + "/>  \r\n" +
+               "        </then>  \r\n" +
+               "      </if>   \r\n"
+               + "    <elseif>\n"
+               + "      <equals>\n" + "        <constant:string value='" + target + "'/>\n"
+               + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
+               + "      </equals>\n"
+               + "      <then>\n"
+               + "          <" + elseDecision.getMydataDecision() + "/>  \r\n"
+               + pxp.toString()
+               + "      </then>\n"
+               + "    </elseif>\n" ;
+      }else{
+       return  "        <then>  \r\n" +
+               "        <" + decision.getMydataDecision() + "/>  \r\n" +
+               pxp.toString() +
+               "        </then>  \r\n" +
+               "      </if>   \r\n"
+               + "    <elseif>\n"
+               + "      <equals>\n" + "        <constant:string value='" + target + "'/>\n"
+               + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
+               + "      </equals>\n"
+               + "      <then>\n"
+               + "          <" + elseDecision.getMydataDecision() + "/>  \r\n"
+               + "      </then>\n"
+               + "    </elseif>\n" ;
+      }
      }
+    }else{
+     return  "        <then>  \r\n" +
+             "        <" + decision.getMydataDecision() + "/>  \r\n" +
+             pxp.toString() +
+             "        </then>  \r\n" +
+             "      </if>   \r\n"
+             + "    <elseif>\n"
+             + "      <equals>\n" + "        <constant:string value='" + target + "'/>\n"
+             + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
+             + "      </equals>\n"
+             + "      <then>\n"
+             + "          <" + elseDecision.getMydataDecision() + "/>  \r\n"
+             + "      </then>\n"
+             + "    </elseif>\n" ;
     }
+
    }else {
     return "";
    }
