@@ -60,21 +60,10 @@ public class MydataPolicy {
 
 
  private String getDecisionBlock() {
-  RuleType elseDecision = getElseDecision();
+
   if(null != modify)
   {
-   return  "        <then>  \r\n" +
-           modify.toString() +
-           "        </then>  \r\n" +
-           "      </if>   \r\n"
-           + "    <elseif>\n"
-           + "      <equals>\n" + "        <constant:string value='" + target + "'/>\n"
-           + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
-           + "      </equals>\n"
-           + "      <then>\n"
-           + "          <" + elseDecision.getMydataDecision() + "/>  \r\n"
-           + "      </then>\n"
-           + "    </elseif>\n" ;
+   return getDecision(modify.toString(),"");
   } else if(decision.equals(RuleType.OBLIGATION) || (decision.equals(RuleType.PERMISSION) && this.hasDuty))
   {
    if(null != pxp)
@@ -84,49 +73,13 @@ public class MydataPolicy {
      {
       if((p.name.equals("logLevel") && p.value.equals("idsc:ON_DENY")) ||
               (p.name.equals("notificationLevel") && p.value.equals("idsc:ON_DENY"))){
-       return  "        <then>  \r\n" +
-               "        <" + decision.getMydataDecision() + "/>  \r\n" +
-               "        </then>  \r\n" +
-               "      </if>   \r\n"
-               + "    <elseif>\n"
-               + "      <equals>\n" + "        <constant:string value='" + target + "'/>\n"
-               + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
-               + "      </equals>\n"
-               + "      <then>\n"
-               + "          <" + elseDecision.getMydataDecision() + "/>  \r\n"
-               + pxp.toString()
-               + "      </then>\n"
-               + "    </elseif>\n" ;
+       return getDecision("",pxp.toString());
       }else{
-       return  "        <then>  \r\n" +
-               "        <" + decision.getMydataDecision() + "/>  \r\n" +
-               pxp.toString() +
-               "        </then>  \r\n" +
-               "      </if>   \r\n"
-               + "    <elseif>\n"
-               + "      <equals>\n" + "        <constant:string value='" + target + "'/>\n"
-               + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
-               + "      </equals>\n"
-               + "      <then>\n"
-               + "          <" + elseDecision.getMydataDecision() + "/>  \r\n"
-               + "      </then>\n"
-               + "    </elseif>\n" ;
+       return getDecision(pxp.toString(),"");
       }
      }
     }else{
-     return  "        <then>  \r\n" +
-             "        <" + decision.getMydataDecision() + "/>  \r\n" +
-             pxp.toString() +
-             "        </then>  \r\n" +
-             "      </if>   \r\n"
-             + "    <elseif>\n"
-             + "      <equals>\n" + "        <constant:string value='" + target + "'/>\n"
-             + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
-             + "      </equals>\n"
-             + "      <then>\n"
-             + "          <" + elseDecision.getMydataDecision() + "/>  \r\n"
-             + "      </then>\n"
-             + "    </elseif>\n" ;
+     return getDecision(pxp.toString(),"");
     }
 
    }else {
@@ -134,19 +87,26 @@ public class MydataPolicy {
    }
 
   }
-   return  "      <then>  \r\n" +
-           "        <" + decision.getMydataDecision() + "/>  \r\n" +
-           "      </then>  \r\n" +
-           "    </if>   \r\n"
-           + "    <elseif>\n"
-           + "      <equals>\n" + "        <constant:string value='" + target + "'/>\n"
-           + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
-           + "      </equals>\n"
-           + "      <then>\n"
-           + "          <" + elseDecision.getMydataDecision() + "/>  \r\n"
-           + "      </then>\n"
-           + "    </elseif>\n" ;
+  return getDecision("","");
 
+ }
+
+ private String getDecision(String thenBlock, String elseBlock) {
+  RuleType elseDecision = getElseDecision();
+  return  "        <then>  \r\n"
+          + "        <" + decision.getMydataDecision() + "/>  \r\n"
+          + thenBlock
+          + "        </then>  \r\n"
+          + "      </if>   \r\n"
+          + "    <elseif>\n"
+          + "      <equals>\n" + "        <constant:string value='" + target + "'/>\n"
+          + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
+          + "      </equals>\n"
+          + "      <then>\n"
+          + "          <" + elseDecision.getMydataDecision() + "/>  \r\n"
+          + elseBlock
+          + "      </then>\n"
+          + "    </elseif>\n" ;
  }
 
  public String getTimerForPolicy() {
