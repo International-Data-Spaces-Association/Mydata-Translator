@@ -7,13 +7,7 @@ import java.util.List;
 
 import de.fraunhofer.iese.ids.odrl.mydata.translator.model.*;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.*;
-import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ActionType;
-import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.IntervalCondition;
-import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.LeftOperand;
-import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ModificationMethod;
-import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.Operator;
-import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.RightOperandType;
-import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.RuleType;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.*;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.interfaces.ITranslator;
 import lombok.Data;
 
@@ -59,15 +53,12 @@ public class MydataTranslator implements ITranslator {
 						 pipParams.add(beginParam);
 						 break;
 					 case HASDURATION:
-						 Duration d = BuildMydataPolicyUtils.getDurationFromPeriodValue(entity.getValue());
-
-						 Timer timer = new Timer(entity.getTimeUnit(), "",mydataPolicy.getPid(), solution, ActionType.DELETE, null);
+						 TimeUnit tu = getTimerUnit(entity.getValue());
+						 Timer timer = new Timer(tu, "",mydataPolicy.getPid(), solution, ActionType.DELETE, null);
 						 mydataPolicy.setTimer(timer);
 
-						 Parameter valueParam = new Parameter(ParameterType.NUMBER, "value", String.valueOf(d.getValue()));
-						 Parameter unitParam = new Parameter(ParameterType.STRING, "value", entity.getTimeUnit().toString());
-						 pipParams.add(valueParam);
-						 pipParams.add(unitParam);
+						 Parameter durationParam = new Parameter(ParameterType.STRING, "delay", String.valueOf(entity.getValue()));
+						 pipParams.add(durationParam);
 						 break;
 				 }
 			 }
@@ -81,10 +72,17 @@ public class MydataTranslator implements ITranslator {
 	      mydataPolicy.setPxp(pxp);
 	     }else if (odrlRefinement.getLeftOperand().equals(LeftOperand.DATE_TIME))
 	     {
-	      DateTime dateTime = new DateTime(IntervalCondition.EQ, odrlRefinement.getRightOperand().getValue());
-	      String cron = createCron(dateTime.getYear(), dateTime.getMonth(), dateTime.getDay(), dateTime.getHour(), dateTime.getMinute(), dateTime.getSecond());
-	      Timer timer = new Timer(null,cron,mydataPolicy.getPid(), solution, ActionType.DELETE,null);
-	      mydataPolicy.setTimer(timer);
+			 for(RightOperandEntity entity: odrlRefinement.getRightOperand().getEntities())
+			 {
+				 switch (entity.getEntityType()) {
+					 case END:
+						 DateTime dateTime = new DateTime(IntervalCondition.EQ, entity.getValue());
+						 String cron = createCron(dateTime.getYear(), dateTime.getMonth(), dateTime.getDay(), dateTime.getHour(), dateTime.getMinute(), dateTime.getSecond());
+						 Timer timer = new Timer(null,cron,mydataPolicy.getPid(), solution, ActionType.DELETE,null);
+						 mydataPolicy.setTimer(timer);
+						 break;
+				 }
+			 }
 	     }
 	    }
 	   }
@@ -118,7 +116,9 @@ public class MydataTranslator implements ITranslator {
 			mydataPolicy = this.roleConstraint(mydataPolicy, odrlConstraint);
 		}else if (odrlConstraint.getLeftOperand().equals(LeftOperand.POLICY_EVALUATION_TIME)) {
 	     mydataPolicy = this.timeIntervalConstraint(mydataPolicy, odrlConstraint);
-	    } else if (odrlConstraint.getLeftOperand().equals(LeftOperand.COUNT)) {
+	    }else if (odrlConstraint.getLeftOperand().equals(LeftOperand.DATE_TIME)) {
+			mydataPolicy = this.dateTimeConstraint(mydataPolicy, odrlConstraint);
+		} else if (odrlConstraint.getLeftOperand().equals(LeftOperand.COUNT)) {
 	     List<Parameter> countParams = Collections.emptyList();
 	     Count countFirstOperand = new Count(this.solution, null, ActionType.USE, countParams, FixedTime.ALWAYS);
 	     Constant countSecondOperand = new Constant(ParameterType.NUMBER, odrlConstraint.getRightOperand().getValue());
@@ -153,7 +153,7 @@ public class MydataTranslator implements ITranslator {
 						break;
 					case HASDURATION:
 						//Duration d = BuildMydataPolicyUtils.getDurationFromPeriodValue(entity.getValue());
-						Parameter durationParam = new Parameter(ParameterType.STRING, "duration", String.valueOf(entity.getValue()));
+						Parameter durationParam = new Parameter(ParameterType.STRING, "duration", entity.getValue());
 						pipParams.add(durationParam);
 						break;
 				}
@@ -205,7 +205,20 @@ public class MydataTranslator implements ITranslator {
 	  return mydataPolicy;
  }
 
- private void nextPolicyPreobligation(MydataPolicy mydataPolicy, ActionType nextpolicy, Condition odrlRefinement) {
+	private TimeUnit getTimerUnit(String value) {
+ 	//start from the smallest time unit
+ 	if(value.contains("H")){
+ 		return TimeUnit.HOURS;
+	}else if(value.contains("D")){
+			return TimeUnit.DAYS;
+ 	}else if(value.contains("M")){
+		return TimeUnit.MONTHS;
+	}else {
+		return TimeUnit.YEARS;
+	}
+	}
+
+	private void nextPolicyPreobligation(MydataPolicy mydataPolicy, ActionType nextpolicy, Condition odrlRefinement) {
   Parameter nextPolicyTargetParam = new Parameter(ParameterType.STRING, LeftOperand.TARGET_POLICY.getMydataLeftOperand() + "-uri", odrlRefinement.getRightOperand().getValue());
   List<Parameter> params = new ArrayList<>();
   params.add(nextPolicyTargetParam);
@@ -290,17 +303,26 @@ public class MydataTranslator implements ITranslator {
 								 params.add(beginParam);
 								 break;
 							 case HASDURATION:
-								 Duration d = BuildMydataPolicyUtils.getDurationFromPeriodValue(entity.getValue());
-								 Parameter valueParam = new Parameter(ParameterType.NUMBER, "value", String.valueOf(d.getValue()));
-								 Parameter unitParam = new Parameter(ParameterType.STRING, "value", entity.getTimeUnit().toString());
-								 params.add(valueParam);
-								 params.add(unitParam);
+								 Parameter durationParam = new Parameter(ParameterType.STRING, "delay", String.valueOf(entity.getValue()));
+								 params.add(durationParam);
 								 break;
 						 }
 					 }
 				 } else if (odrlRefinement.getLeftOperand().equals(LeftOperand.DATE_TIME)) {
-					 Parameter datetimeParam = new Parameter(ParameterType.STRING, LeftOperand.DATE_TIME.getMydataLeftOperand(), odrlRefinement.getRightOperand().getValue());
-					 params.add(datetimeParam);
+
+					 for(RightOperandEntity entity: odrlRefinement.getRightOperand().getEntities())
+					 {
+						 switch (entity.getEntityType()) {
+							 case BEGIN:
+								 Parameter beginParam = new Parameter(ParameterType.STRING, "beginTime", entity.getValue());
+								 params.add(beginParam);
+								 break;
+							 case END:
+								 Parameter endParam = new Parameter(ParameterType.STRING, "deadline", entity.getValue());
+								 params.add(endParam);
+								 break;
+						 }
+					 }
 				 }
 			 }
 		 }
@@ -360,6 +382,31 @@ public class MydataTranslator implements ITranslator {
   }
   return mydataPolicy;
  }
+
+private MydataPolicy dateTimeConstraint(MydataPolicy mydataPolicy, Condition dateTimeConstraint) {
+	if(null != dateTimeConstraint)
+	{
+		List<DateTime> dateTimes = new ArrayList<>();
+		for(RightOperandEntity entity: dateTimeConstraint.getRightOperand().getEntities())
+		{
+			switch (entity.getEntityType()) {
+				case BEGIN:
+					String start = entity.getValue();
+					DateTime startTime = new DateTime(IntervalCondition.GT, start);
+					dateTimes.add(startTime);
+					break;
+				case END:
+					String end = entity.getValue();
+					DateTime endTime = new DateTime(IntervalCondition.LT, end);
+					dateTimes.add(endTime);
+					break;
+			}
+		}
+
+		mydataPolicy.setDateTimes(dateTimes);
+	}
+	return mydataPolicy;
+}
 
 private MydataPolicy targetConstraint(MydataPolicy mydataPolicy, String target) {
 	if(null != target)
