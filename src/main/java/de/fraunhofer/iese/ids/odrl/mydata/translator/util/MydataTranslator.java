@@ -152,11 +152,9 @@ public class MydataTranslator implements ITranslator {
 						pipParams.add(beginParam);
 						break;
 					case HASDURATION:
-						Duration d = BuildMydataPolicyUtils.getDurationFromPeriodValue(entity.getValue());
-						Parameter valueParam = new Parameter(ParameterType.NUMBER, "value", String.valueOf(d.getValue()));
-						Parameter unitParam = new Parameter(ParameterType.STRING, "value", entity.getTimeUnit().toString());
-						pipParams.add(valueParam);
-						pipParams.add(unitParam);
+						//Duration d = BuildMydataPolicyUtils.getDurationFromPeriodValue(entity.getValue());
+						Parameter durationParam = new Parameter(ParameterType.STRING, "duration", String.valueOf(entity.getValue()));
+						pipParams.add(durationParam);
 						break;
 				}
 			}
