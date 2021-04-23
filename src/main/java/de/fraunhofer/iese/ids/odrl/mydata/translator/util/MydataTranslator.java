@@ -98,7 +98,7 @@ public class MydataTranslator implements ITranslator {
 	     mydataPolicy = this.purposeConstraint(mydataPolicy, odrlConstraint);
 	    } else if (odrlConstraint.getLeftOperand().equals(LeftOperand.EVENT)) {
 	     mydataPolicy = this.eventConstraint(mydataPolicy, odrlConstraint);
-	    } else if (odrlConstraint.getLeftOperand().equals(LeftOperand.ABSOLUTESPATIALPOSITION)) {
+	    } else if (odrlConstraint.getLeftOperand().equals(LeftOperand.ABSOLUTE_SPATIAL_POSITION)) {
 	     mydataPolicy = this.absoluteSpatialPositionConstraint(mydataPolicy, odrlConstraint);
 	    } else if (odrlConstraint.getLeftOperand().equals(LeftOperand.PAY_AMOUNT)) {
 	     mydataPolicy = this.paymentConstraint(mydataPolicy, odrlConstraint);
@@ -172,7 +172,7 @@ public class MydataTranslator implements ITranslator {
 	    if (preobligation.getAction().getType().equals(ActionType.ANONYMIZE)) {
 	     if(null != preobligation.getAction().getRefinements()) {
 	      for (Condition odrlRefinement : preobligation.getAction().getRefinements()) {
-	       if (odrlRefinement.getLeftOperand().equals(LeftOperand.MODIFICATIONMETHOD)) {
+	       if (odrlRefinement.getLeftOperand().equals(LeftOperand.MODIFICATION_METHOD)) {
 	        anonymizePreobligation(mydataPolicy, odrlRefinement);
 	       }
 	      }
@@ -197,7 +197,7 @@ public class MydataTranslator implements ITranslator {
 	        informPostobligation(mydataPolicy, actionType, odrlRefinements);
 	    } else if (actionType.equals(ActionType.LOG)) {
 	    	logPostobligation(mydataPolicy, actionType, odrlRefinements);
-	    } else if (actionType.equals(ActionType.COUNT)) {
+	    } else if (actionType.equals(ActionType.INCREMENT_COUNTER)) {
 			countPostobligation(mydataPolicy, actionType);
 		}
 	   }
@@ -345,11 +345,11 @@ public class MydataTranslator implements ITranslator {
  private MydataPolicy absoluteSpatialPositionConstraint(MydataPolicy mydataPolicy, Condition absoluteSpatialPositionConstraint) {
   if(null != absoluteSpatialPositionConstraint)
   {
-   Parameter locationParam = new Parameter(ParameterType.STRING,LeftOperand.ABSOLUTESPATIALPOSITION.getMydataLeftOperand()+"-uri", absoluteSpatialPositionConstraint.getRightOperand().getValue());
+   Parameter locationParam = new Parameter(ParameterType.STRING,LeftOperand.ABSOLUTE_SPATIAL_POSITION.getMydataLeftOperand()+"-uri", absoluteSpatialPositionConstraint.getRightOperand().getValue());
    List<Parameter> pipParams = new ArrayList<>();
    pipParams.add(locationParam);
    
-   PIPBoolean locationPipBoolean = new PIPBoolean(this.solution, LeftOperand.ABSOLUTESPATIALPOSITION, pipParams);
+   PIPBoolean locationPipBoolean = new PIPBoolean(this.solution, LeftOperand.ABSOLUTE_SPATIAL_POSITION, pipParams);
 
    List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
    pips.add(locationPipBoolean);
