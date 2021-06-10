@@ -2,6 +2,7 @@ package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 
 import java.util.List;
 
+import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ActionType;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ModificationMethod;
 import lombok.Data;
 
@@ -9,15 +10,14 @@ import lombok.Data;
 public class Modify implements Operand {
 
     String eventParameter;
-    //ActionType dutyAction;
-    ModificationMethod modificationMethod;
+    ActionType modifyAction;
     String jsonPath;
     List<Parameter> parameters;
 
-    public Modify(String eventParameter, ModificationMethod modificationMethod, String jsonPath, List<Parameter> parameters) {
+    public Modify(String eventParameter, ActionType modifyAction, String jsonPath, List<Parameter> parameters) {
 
         this.eventParameter = eventParameter;
-        this.modificationMethod = modificationMethod;
+        this.modifyAction = modifyAction;
         this.jsonPath = jsonPath;
         this.parameters = parameters;
     }
@@ -27,7 +27,7 @@ public class Modify implements Operand {
 
     @Override
     public String toString() {
-        return  "        <modify eventParameter='" + eventParameter + "' method='"+ modificationMethod.getMydataMethod() +"' jsonPathQuery='" + jsonPath + "'> " + System.lineSeparator() +
+        return  "        <modify eventParameter='" + eventParameter + "' method='"+ modifyAction.name().toLowerCase() +"' jsonPathQuery='" + jsonPath + "'> " + System.lineSeparator() +
                 getParameters() +
                 "        </modify> " + System.lineSeparator();
     }

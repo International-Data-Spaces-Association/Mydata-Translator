@@ -169,18 +169,14 @@ public class MydataTranslator implements ITranslator {
 
 	  if(null != odrlPolicy.getRules().get(0).getPreduties()) {
 	   for (Rule preobligation : odrlPolicy.getRules().get(0).getPreduties()) {
-	    if (preobligation.getAction().getType().equals(ActionType.ANONYMIZE)) {
-	     if(null != preobligation.getAction().getRefinements()) {
-	      for (Condition odrlRefinement : preobligation.getAction().getRefinements()) {
-	       if (odrlRefinement.getLeftOperand().equals(LeftOperand.MODIFICATION_METHOD)) {
-	        anonymizePreobligation(mydataPolicy, odrlRefinement);
-	       }
-	      }
-	     }
-	    } else if (preobligation.getAction().getType().equals(ActionType.NEXT_POLICY)) {
+	   	ActionType actionType = preobligation.getAction().getType();
+	    if (actionType.equals(ActionType.ANONYMIZE) || actionType.equals(ActionType.REPLACE) || actionType.equals(ActionType.DELETE)) {
+			ArrayList<Condition> odrlRefinements = preobligation.getAction().getRefinements();
+			anonymizePreobligation(mydataPolicy, actionType, odrlRefinements);
+	    } else if (actionType.equals(ActionType.NEXT_POLICY)) {
 	     if (null != preobligation.getAction().getRefinements()) {
 	      for (Condition odrlRefinement : preobligation.getAction().getRefinements()) {
-	       nextPolicyPreobligation(mydataPolicy, ActionType.NEXT_POLICY, odrlRefinement);
+	       nextPolicyPreobligation(mydataPolicy, actionType, odrlRefinement);
 	      }
 	     }
 	    }
@@ -190,7 +186,7 @@ public class MydataTranslator implements ITranslator {
 	  if(null != odrlPolicy.getRules().get(0).getPostduties()) {
 	   for (Rule postobligation : odrlPolicy.getRules().get(0).getPostduties()) {
 	   	ActionType actionType = postobligation.getAction().getType();
-		   ArrayList<Condition> odrlRefinements = postobligation.getAction().getRefinements();
+	   	ArrayList<Condition> odrlRefinements = postobligation.getAction().getRefinements();
 	    if (actionType.equals(ActionType.DELETE)) {
 	    	deletePostobligation(mydataPolicy, actionType, odrlRefinements);
 	    } else if (actionType.equals(ActionType.INFORM) || actionType.equals(ActionType.NOTIFY)) {
@@ -267,26 +263,29 @@ public class MydataTranslator implements ITranslator {
   mydataPolicy.setHasDuty(true);
  }
 
- private void anonymizePreobligation(MydataPolicy mydataPolicy, Condition odrlRefinement) {
+ private void anonymizePreobligation(MydataPolicy mydataPolicy, ActionType actionType, ArrayList<Condition> odrlRefinements) {
 	 Modify modify = null;
 	 String eventParameterToModify = "DataObject";
- 	if(odrlRefinement.getRightOperand().getValue().equals(ModificationMethod.DELETE.getIdsMethod()))
-	{
-		modify = new Modify(eventParameterToModify, ModificationMethod.DELETE, odrlRefinement.getJsonPath(), null);
-
-	}else{
-		ParameterType paramType = ParameterType.STRING;
-		if(odrlRefinement.getReplaceWith().getType().equals(RightOperandType.INTEGER) ||
-				odrlRefinement.getReplaceWith().getType().equals(RightOperandType.DECIMAL))
-		{
-			paramType = ParameterType.NUMBER;
-		}
-		Parameter replaceWithParam = new Parameter(paramType, "replaceWith", odrlRefinement.getReplaceWith().getValue());
-		  List<Parameter> params = new ArrayList<>();
-		  params.add(replaceWithParam);
-		modify = new Modify(eventParameterToModify, ModificationMethod.REPLACE, odrlRefinement.getJsonPath(), params);
-	}
-
+	 List<Parameter> params = null;
+	 String jsonPathQuery = "";
+	 if(null != odrlRefinements) {
+		 for (Condition odrlRefinement : odrlRefinements) {
+		 	if(odrlRefinement.getLeftOperand().equals(LeftOperand.REPLACE_WITH)){
+				ParameterType paramType = ParameterType.STRING;
+				if(odrlRefinement.getType().equals(RightOperandType.INTEGER) ||
+						odrlRefinement.getType().equals(RightOperandType.DECIMAL)) {
+					paramType = ParameterType.NUMBER;
+				}
+				Parameter replaceWithParam = new Parameter(paramType, "replaceWith", odrlRefinement.getRightOperand().getValue());
+				params = new ArrayList<>();
+				params.add(replaceWithParam);
+			}
+			 if (odrlRefinement.getLeftOperand().equals(LeftOperand.SUBSET_SPECIFICATION)) {
+			 	jsonPathQuery = odrlRefinement.getRightOperand().getValue();
+			 }
+		 }
+	 }
+	 modify = new Modify(eventParameterToModify, actionType, jsonPathQuery, params);
 	 mydataPolicy.setModify(modify);
  }
 
