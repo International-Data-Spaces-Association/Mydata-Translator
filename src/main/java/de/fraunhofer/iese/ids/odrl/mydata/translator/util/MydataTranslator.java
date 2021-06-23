@@ -280,7 +280,7 @@ public class MydataTranslator implements ITranslator {
 				params = new ArrayList<>();
 				params.add(replaceWithParam);
 			}
-			 if (odrlRefinement.getLeftOperand().equals(LeftOperand.SUBSET_SPECIFICATION)) {
+			 if (odrlRefinement.getLeftOperand().equals(LeftOperand.JSON_PATH)) {
 			 	jsonPathQuery = odrlRefinement.getRightOperand().getValue();
 			 }
 		 }
