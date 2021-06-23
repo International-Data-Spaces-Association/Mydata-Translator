@@ -48,7 +48,7 @@ public class MydataPolicy {
 		if (null != policyId && null != actionString && null != conditionsBlock && null != decisionBlock && null != target) {
 			mydataPolicy = String.format(
 					"<policy id='%1$s' description='This is the generated usage policy for %1$s. ' xmlns='http://www.mydata-control.de/4.0/mydataLanguage' xmlns:tns='http://www.mydata-control.de/4.0/mydataLanguage' xmlns:parameter='http://www.mydata-control.de/4.0/parameter' xmlns:pip='http://www.mydata-control.de/4.0/pip' xmlns:function='http://www.mydata-control.de/4.0/function' xmlns:event='http://www.mydata-control.de/4.0/event' xmlns:constant='http://www.mydata-control.de/4.0/constant' xmlns:variable='http://www.mydata-control.de/4.0/variable' xmlns:variableDeclaration='http://www.mydata-control.de/4.0/variableDeclaration' xmlns:valueChanged='http://www.mydata-control.de/4.0/valueChanged' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:date='http://www.mydata-control.de/4.0/date' xmlns:time='http://www.mydata-control.de/4.0/time' xmlns:day='http://www.mydata-control.de/4.0/day'>\n"
-							+ "  <mechanism event='urn:action:ids:%2$s'>\n" 
+							+ "  <mechanism event='urn:action:ids:%2$s'>\n"
 							+ "    <if>\n"
 							+ "%3$s"
 							+ "%4$s"
@@ -57,42 +57,56 @@ public class MydataPolicy {
 		}
 		return mydataPolicy;
  }
- 
+
 
  private String getDecisionBlock() {
-  RuleType elseDecision = getElseDecision();
+
   if(null != modify)
   {
-   return  "        <then>  \r\n" +
-           modify.toString() +
-           "        </then>  \r\n" +
-           "      </if>   \r\n" ;
+   return getDecision(modify.toString(),"");
   } else if(decision.equals(RuleType.OBLIGATION) || (decision.equals(RuleType.PERMISSION) && this.hasDuty))
   {
    if(null != pxp)
    {
-    return  "        <then>  \r\n" +
-            pxp.toString() +
-            "        </then>  \r\n" +
-            "      </if>   \r\n" ;
+    if(pxp.parameters != null){
+     for(Parameter p:pxp.parameters)
+     {
+      if((p.name.equals("logLevel") && p.value.equals("idsc:ON_DENY")) ||
+              (p.name.equals("notificationLevel") && p.value.equals("idsc:ON_DENY"))){
+       return getDecision("",pxp.toString());
+      }else{
+       return getDecision(pxp.toString(),"");
+      }
+     }
+    }else{
+     return getDecision(pxp.toString(),"");
+    }
+
    }else {
     return "";
    }
 
-  }else {
-   return  "      <then>  \r\n" +
-           "        <" + decision.getMydataDecision() + "/>  \r\n" +
-           "      </then>  \r\n" +
-           "    </if>   \r\n"
-           + "    <elseif>\n"
-           + "      <equals>\n" + "        <constant:string value='" + target + "'/>\n"
-           + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
-           + "      </equals>\n" 
-           + "      <then>\n" 
-           + "          <" + elseDecision.getMydataDecision() + "/>  \r\n" 
-           + "      </then>\n"
-           + "    </elseif>\n" ;
   }
+  return getDecision("","");
+
+ }
+
+ private String getDecision(String thenBlock, String elseBlock) {
+  RuleType elseDecision = getElseDecision();
+  return  "        <then>  \r\n"
+          + "        <" + decision.getMydataDecision() + "/>  \r\n"
+          + thenBlock
+          + "        </then>  \r\n"
+          + "      </if>   \r\n"
+          + "    <elseif>\n"
+          + "      <equals>\n" + "        <constant:string value='" + target + "'/>\n"
+          + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
+          + "      </equals>\n"
+          + "      <then>\n"
+          + "          <" + elseDecision.getMydataDecision() + "/>  \r\n"
+          + elseBlock
+          + "      </then>\n"
+          + "    </elseif>\n" ;
  }
 
  public String getTimerForPolicy() {
