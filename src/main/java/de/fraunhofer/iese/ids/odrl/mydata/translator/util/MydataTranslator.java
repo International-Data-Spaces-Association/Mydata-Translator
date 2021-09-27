@@ -45,16 +45,21 @@ public class MydataTranslator implements ITranslator {
 	    for(Condition odrlRefinement: odrlPolicy.getRules().get(0).getAction().getRefinements()) {
 	     if (odrlRefinement.getLeftOperand().equals(LeftOperand.DELAY)) {
 			 List<Parameter> pipParams = new ArrayList<>();
-			 for(RightOperandEntity entity: odrlRefinement.getRightOperand().getEntities())
-			 {
+			 //semantically, the time conditions cannot get more than one right operand; time conflicts occurs.
+			 for (RightOperandEntity entity : odrlRefinement.getRightOperands().get(0).getEntities()) {
 				 switch (entity.getEntityType()) {
 					 case BEGIN:
-						 Parameter beginParam = new Parameter(ParameterType.STRING, "begin", entity.getValue());
+						 RightOperandEntity beginInnerEntity = entity.getInnerEntity();
+						 Parameter beginParam = new Parameter(ParameterType.STRING, "begin", beginInnerEntity.getValue());
 						 pipParams.add(beginParam);
+						 break;
+					 case DATETIME:
+						 Parameter datetimeParam = new Parameter(ParameterType.STRING, "beginDateTime", entity.getValue());
+						 pipParams.add(datetimeParam);
 						 break;
 					 case HASDURATION:
 						 TimeUnit tu = getTimerUnit(entity.getValue());
-						 Timer timer = new Timer(tu, "",mydataPolicy.getPid(), solution, ActionType.DELETE, null);
+						 Timer timer = new Timer(tu, "", mydataPolicy.getPid(), solution, ActionType.DELETE, null);
 						 mydataPolicy.setTimer(timer);
 
 						 Parameter durationParam = new Parameter(ParameterType.STRING, "delay", String.valueOf(entity.getValue()));
@@ -72,13 +77,20 @@ public class MydataTranslator implements ITranslator {
 	      mydataPolicy.setPxp(pxp);
 	     }else if (odrlRefinement.getLeftOperand().equals(LeftOperand.DATE_TIME))
 	     {
-			 for(RightOperandEntity entity: odrlRefinement.getRightOperand().getEntities())
-			 {
+			 //semantically, the date time conditions cannot get more than one right operand; time conflicts occurs.
+			 for (RightOperandEntity entity : odrlRefinement.getRightOperands().get(0).getEntities()) {
 				 switch (entity.getEntityType()) {
 					 case END:
+						 RightOperandEntity endInnerEntity = entity.getInnerEntity();
+						 DateTime endDateTime = new DateTime(IntervalCondition.EQ, endInnerEntity.getValue());
+						 String endCron = createCron(endDateTime.getYear(), endDateTime.getMonth(), endDateTime.getDay(), endDateTime.getHour(), endDateTime.getMinute(), endDateTime.getSecond());
+						 Timer endTimer = new Timer(null, endCron, mydataPolicy.getPid(), solution, ActionType.DELETE, null);
+						 mydataPolicy.setTimer(endTimer);
+						 break;
+					 case DATETIME:
 						 DateTime dateTime = new DateTime(IntervalCondition.EQ, entity.getValue());
 						 String cron = createCron(dateTime.getYear(), dateTime.getMonth(), dateTime.getDay(), dateTime.getHour(), dateTime.getMinute(), dateTime.getSecond());
-						 Timer timer = new Timer(null,cron,mydataPolicy.getPid(), solution, ActionType.DELETE,null);
+						 Timer timer = new Timer(null, cron, mydataPolicy.getPid(), solution, ActionType.DELETE, null);
 						 mydataPolicy.setTimer(timer);
 						 break;
 				 }
@@ -119,42 +131,73 @@ public class MydataTranslator implements ITranslator {
 	    }else if (odrlConstraint.getLeftOperand().equals(LeftOperand.DATE_TIME)) {
 			mydataPolicy = this.dateTimeConstraint(mydataPolicy, odrlConstraint);
 		} else if (odrlConstraint.getLeftOperand().equals(LeftOperand.COUNT)) {
-	     List<Parameter> countParams = Collections.emptyList();
-	     Count countFirstOperand = new Count(this.solution, null, ActionType.USE, countParams, FixedTime.ALWAYS);
-	     Constant countSecondOperand = new Constant(ParameterType.NUMBER, odrlConstraint.getRightOperand().getValue());
-	     MydataCondition countCondition = new MydataCondition(countFirstOperand, Operator.LT, countSecondOperand);
-	     List<MydataCondition> cons = mydataPolicy.getConditions();
-	     cons.add(countCondition);
-	     mydataPolicy.setConditions(cons);
+			 List<Parameter> countParams = Collections.emptyList();
+			 Count countFirstOperand = new Count(this.solution, null, ActionType.USE, countParams, FixedTime.ALWAYS);
+			//semantically, the count conditions cannot get more than one right operand; counter conflict occurs.
+			 Constant countSecondOperand = new Constant(ParameterType.NUMBER, odrlConstraint.getRightOperands().get(0).getValue());
+			 MydataCondition countCondition = new MydataCondition(countFirstOperand, Operator.LT, countSecondOperand);
+			 List<MydataCondition> cons = mydataPolicy.getConditions();
+			 cons.add(countCondition);
+			 mydataPolicy.setConditions(cons);
 	    } else if (odrlConstraint.getLeftOperand().equals(LeftOperand.ENCODING)) {
-	     Parameter encodingParam = new Parameter(ParameterType.STRING, LeftOperand.ENCODING.getMydataLeftOperand() + "-uri", odrlConstraint.getRightOperand().getValue());
-	     List<Parameter> pipParams = new ArrayList<>();
-	     pipParams.add(encodingParam);
-	     PIPBoolean encodingPipBoolean = new PIPBoolean(this.solution, LeftOperand.ENCODING, pipParams);
-	     List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
-	     pips.add(encodingPipBoolean);
-	     mydataPolicy.setPipBooleans(pips);
-	    } else if (odrlConstraint.getLeftOperand().equals(LeftOperand.ARTIFACT_STATE)) {
-			Parameter artifactStateParam = new Parameter(ParameterType.STRING, LeftOperand.ARTIFACT_STATE.getMydataLeftOperand(), odrlConstraint.getRightOperand().getValue());
 			List<Parameter> pipParams = new ArrayList<>();
-			pipParams.add(artifactStateParam);
+	    	for(RightOperand rightOperand: odrlConstraint.getRightOperands())
+			{
+				Parameter encodingParam = new Parameter(ParameterType.STRING, LeftOperand.ENCODING.getMydataLeftOperand() + "-uri", rightOperand.getValue());
+				pipParams.add(encodingParam);
+			}
+			Operator op = odrlConstraint.getOperator();
+			if(op.equals(Operator.IS_ANY_OF) ||
+					op.equals(Operator.IS_NONE_OF) ||
+					op.equals(Operator.IS_ALL_OF))
+			{
+				//pass the list operator as a parameter to the PIP, too!
+				Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+				pipParams.add(operatorParam);
+			}
+			PIPBoolean encodingPipBoolean = new PIPBoolean(this.solution, LeftOperand.ENCODING, pipParams);
+			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
+			pips.add(encodingPipBoolean);
+			mydataPolicy.setPipBooleans(pips);
+	    } else if (odrlConstraint.getLeftOperand().equals(LeftOperand.ARTIFACT_STATE)) {
+			List<Parameter> pipParams = new ArrayList<>();
+			for(RightOperand rightOperand: odrlConstraint.getRightOperands())
+			{
+				Parameter artifactStateParam = new Parameter(ParameterType.STRING, LeftOperand.ARTIFACT_STATE.getMydataLeftOperand(), rightOperand.getValue());
+				pipParams.add(artifactStateParam);
+			}
+			Operator op = odrlConstraint.getOperator();
+			if(op.equals(Operator.IS_ANY_OF) ||
+					op.equals(Operator.IS_NONE_OF) ||
+					op.equals(Operator.IS_ALL_OF))
+			{
+				//pass the list operator as a parameter to the PIP, too!
+				Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+				pipParams.add(operatorParam);
+			}
 			PIPBoolean artifactStatePipBoolean = new PIPBoolean(this.solution, LeftOperand.ENCODING, pipParams);
 			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
 			pips.add(artifactStatePipBoolean);
 			mydataPolicy.setPipBooleans(pips);
 		} else if (odrlConstraint.getLeftOperand().equals(LeftOperand.ELAPSED_TIME)) {
 			List<Parameter> pipParams = new ArrayList<>();
-	    	for(RightOperandEntity entity: odrlConstraint.getRightOperand().getEntities())
+			//semantically, the elapsed time conditions cannot get more than one right operand; time conflicts occurs.
+	    	for(RightOperandEntity entity: odrlConstraint.getRightOperands().get(0).getEntities())
 			{
 				switch (entity.getEntityType()) {
 					case BEGIN:
-						Parameter beginParam = new Parameter(ParameterType.STRING, "begin", entity.getValue());
+						RightOperandEntity beginInnerEntity = entity.getInnerEntity();
+						Parameter beginParam = new Parameter(ParameterType.STRING, "begin", beginInnerEntity.getValue());
 						pipParams.add(beginParam);
 						break;
 					case HASDURATION:
 						//Duration d = BuildMydataPolicyUtils.getDurationFromPeriodValue(entity.getValue());
 						Parameter durationParam = new Parameter(ParameterType.STRING, "duration", entity.getValue());
 						pipParams.add(durationParam);
+						break;
+					case DATETIME:
+						Parameter dateTimeParam = new Parameter(ParameterType.STRING, "beginDateTime", entity.getValue());
+						pipParams.add(dateTimeParam);
 						break;
 				}
 			}
@@ -215,27 +258,56 @@ public class MydataTranslator implements ITranslator {
 	}
 
 	private void nextPolicyPreobligation(MydataPolicy mydataPolicy, ActionType nextpolicy, Condition odrlRefinement) {
-  Parameter nextPolicyTargetParam = new Parameter(ParameterType.STRING, LeftOperand.TARGET_POLICY.getMydataLeftOperand() + "-uri", odrlRefinement.getRightOperand().getValue());
-  List<Parameter> params = new ArrayList<>();
-  params.add(nextPolicyTargetParam);
-  ExecuteAction pxp = new ExecuteAction(solution, nextpolicy, params);
-  mydataPolicy.setPxp(pxp);
-  mydataPolicy.setHasDuty(true);
- }
+		List<Parameter> params = new ArrayList<>();
+		// list of target policies (offer contracts)
+		for(RightOperand rightOperand: odrlRefinement.getRightOperands())
+		{
+			Parameter nextPolicyTargetParam = new Parameter(ParameterType.STRING, LeftOperand.TARGET_POLICY.getMydataLeftOperand() + "-uri", rightOperand.getValue());
+			params.add(nextPolicyTargetParam);
+		}
+		Operator op = odrlRefinement.getOperator();
+		if(op.equals(Operator.IS_ANY_OF) ||
+				op.equals(Operator.IS_NONE_OF) ||
+				op.equals(Operator.IS_ALL_OF))
+		{
+			//pass the list operator as a parameter to the PIP, too!
+			Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+			params.add(operatorParam);
+		}
+		ExecuteAction pxp = new ExecuteAction(solution, nextpolicy, params);
+		mydataPolicy.setPxp(pxp);
+		mydataPolicy.setHasDuty(true);
+	 }
 
  private void informPostobligation(MydataPolicy mydataPolicy, ActionType inform, ArrayList<Condition> odrlRefinements) {
 	 List<Parameter> params = new ArrayList<>();
 	 if(null != odrlRefinements) {
 		 for (Condition odrlRefinement : odrlRefinements) {
-			 if (odrlRefinement.getLeftOperand().equals(LeftOperand.INFORMEDPARTY)) {
-				 Parameter informedPartyParam = new Parameter(ParameterType.STRING, LeftOperand.INFORMEDPARTY.getMydataLeftOperand() + "-uri", odrlRefinement.getRightOperand().getValue());
-				 params.add(informedPartyParam);
-			 } else if (odrlRefinement.getLeftOperand().equals(LeftOperand.RECIPIENT)) {
-				 Parameter recipientParam = new Parameter(ParameterType.STRING, LeftOperand.RECIPIENT.getMydataLeftOperand() + "-uri", odrlRefinement.getRightOperand().getValue());
-				 params.add(recipientParam);
-			 }else if (odrlRefinement.getLeftOperand().equals(LeftOperand.NOTIFICATION_LEVEL)) {
-				 Parameter notifLevelParam = new Parameter(ParameterType.STRING, LeftOperand.NOTIFICATION_LEVEL.getMydataLeftOperand(), odrlRefinement.getRightOperand().getValue());
-				 params.add(notifLevelParam);
+		 	// list of recipients or informed parties
+			if (odrlRefinement.getLeftOperand().equals(LeftOperand.INFORMEDPARTY)) {
+				for(RightOperand rightOperand: odrlRefinement.getRightOperands()) {
+					Parameter informedPartyParam = new Parameter(ParameterType.STRING, LeftOperand.INFORMEDPARTY.getMydataLeftOperand() + "-uri", rightOperand.getValue());
+					params.add(informedPartyParam);
+				}
+			} else if (odrlRefinement.getLeftOperand().equals(LeftOperand.RECIPIENT)) {
+				for(RightOperand rightOperand: odrlRefinement.getRightOperands()) {
+					Parameter recipientParam = new Parameter(ParameterType.STRING, LeftOperand.RECIPIENT.getMydataLeftOperand() + "-uri", rightOperand.getValue());
+					params.add(recipientParam);
+				}
+			} else if (odrlRefinement.getLeftOperand().equals(LeftOperand.NOTIFICATION_LEVEL)) {
+				for(RightOperand rightOperand: odrlRefinement.getRightOperands()) {
+					Parameter notifLevelParam = new Parameter(ParameterType.STRING, LeftOperand.NOTIFICATION_LEVEL.getMydataLeftOperand(), rightOperand.getValue());
+					params.add(notifLevelParam);
+				}
+			}
+			 Operator op = odrlRefinement.getOperator();
+			 if(op.equals(Operator.IS_ANY_OF) ||
+					 op.equals(Operator.IS_NONE_OF) ||
+					 op.equals(Operator.IS_ALL_OF))
+			 {
+				 //pass the list operator as a parameter to the PIP, too!
+				 Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+				 params.add(operatorParam);
 			 }
 		 }
 	 }
@@ -249,12 +321,27 @@ public class MydataTranslator implements ITranslator {
 	 List<Parameter> params = new ArrayList<>();
 	 if(null != odrlRefinements) {
 		 for (Condition odrlRefinement : odrlRefinements) {
-			 if (odrlRefinement.getLeftOperand().equals(LeftOperand.SYSTEM_DEVICE)) {
-				 Parameter systemDeviceParam = new Parameter(ParameterType.STRING, LeftOperand.SYSTEM_DEVICE.getMydataLeftOperand() + "-uri", odrlRefinement.getRightOperand().getValue());
-				 params.add(systemDeviceParam);
-			 } else if (odrlRefinement.getLeftOperand().equals(LeftOperand.LOG_LEVEL)) {
-				 Parameter logLevelParam = new Parameter(ParameterType.STRING, LeftOperand.LOG_LEVEL.getMydataLeftOperand(), odrlRefinement.getRightOperand().getValue());
-				 params.add(logLevelParam);
+		 	//list of system devices
+
+			if (odrlRefinement.getLeftOperand().equals(LeftOperand.SYSTEM_DEVICE)) {
+				for (RightOperand rightOperand: odrlRefinement.getRightOperands()) {
+					Parameter systemDeviceParam = new Parameter(ParameterType.STRING, LeftOperand.SYSTEM_DEVICE.getMydataLeftOperand() + "-uri", rightOperand.getValue());
+					params.add(systemDeviceParam);
+				}
+			} else if (odrlRefinement.getLeftOperand().equals(LeftOperand.LOG_LEVEL)) {
+				for (RightOperand rightOperand: odrlRefinement.getRightOperands()) {
+					Parameter logLevelParam = new Parameter(ParameterType.STRING, LeftOperand.LOG_LEVEL.getMydataLeftOperand(), rightOperand.getValue());
+					params.add(logLevelParam);
+				}
+			}
+			 Operator op = odrlRefinement.getOperator();
+			 if(op.equals(Operator.IS_ANY_OF) ||
+					 op.equals(Operator.IS_NONE_OF) ||
+					 op.equals(Operator.IS_ALL_OF))
+			 {
+				 //pass the list operator as a parameter to the PIP, too!
+				 Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+				 params.add(operatorParam);
 			 }
 		 }
 	 }
@@ -276,12 +363,14 @@ public class MydataTranslator implements ITranslator {
 						odrlRefinement.getType().equals(RightOperandType.DECIMAL)) {
 					paramType = ParameterType.NUMBER;
 				}
-				Parameter replaceWithParam = new Parameter(paramType, "replaceWith", odrlRefinement.getRightOperand().getValue());
+				// semantically, you can replace a field with only one value.
+				Parameter replaceWithParam = new Parameter(paramType, "replaceWith", odrlRefinement.getRightOperands().get(0).getValue());
 				params = new ArrayList<>();
 				params.add(replaceWithParam);
 			}
 			 if (odrlRefinement.getLeftOperand().equals(LeftOperand.JSON_PATH)) {
-			 	jsonPathQuery = odrlRefinement.getRightOperand().getValue();
+			 	// Currently, the MYDATA modifier accepts only one JSON Path for a modification.
+			 	jsonPathQuery = odrlRefinement.getRightOperands().get(0).getValue();
 			 }
 		 }
 	 }
@@ -295,10 +384,12 @@ public class MydataTranslator implements ITranslator {
 		 for (Condition odrlRefinement : odrlRefinements) {
 			 if (null != odrlRefinement) {
 				 if (odrlRefinement.getLeftOperand().equals(LeftOperand.DELAY)) {
-					 for (RightOperandEntity entity : odrlRefinement.getRightOperand().getEntities()) {
+					 //semantically, the time conditions cannot get more than one right operand; time conflicts occurs.
+					 for (RightOperandEntity entity : odrlRefinement.getRightOperands().get(0).getEntities()) {
 						 switch (entity.getEntityType()) {
 							 case BEGIN:
-								 Parameter beginParam = new Parameter(ParameterType.STRING, "begin", entity.getValue());
+								 RightOperandEntity beginInnerEntity = entity.getInnerEntity();
+								 Parameter beginParam = new Parameter(ParameterType.STRING, "begin", beginInnerEntity.getValue());
 								 params.add(beginParam);
 								 break;
 							 case HASDURATION:
@@ -309,16 +400,23 @@ public class MydataTranslator implements ITranslator {
 					 }
 				 } else if (odrlRefinement.getLeftOperand().equals(LeftOperand.DATE_TIME)) {
 
-					 for(RightOperandEntity entity: odrlRefinement.getRightOperand().getEntities())
+					 //semantically, the time conditions cannot get more than one right operand; time conflicts occurs.
+					 for(RightOperandEntity entity: odrlRefinement.getRightOperands().get(0).getEntities())
 					 {
 						 switch (entity.getEntityType()) {
 							 case BEGIN:
-								 Parameter beginParam = new Parameter(ParameterType.STRING, "beginTime", entity.getValue());
+								 RightOperandEntity beginInnerEntity = entity.getInnerEntity();
+								 Parameter beginParam = new Parameter(ParameterType.STRING, "beginTime", beginInnerEntity.getValue());
 								 params.add(beginParam);
 								 break;
 							 case END:
-								 Parameter endParam = new Parameter(ParameterType.STRING, "deadline", entity.getValue());
+								 RightOperandEntity endInnerEntity = entity.getInnerEntity();
+								 Parameter endParam = new Parameter(ParameterType.STRING, "deadline", endInnerEntity.getValue());
 								 params.add(endParam);
+								 break;
+							 case DATETIME:
+								 Parameter dateTimeParam = new Parameter(ParameterType.STRING, "dateTime", entity.getValue());
+								 params.add(dateTimeParam);
 								 break;
 						 }
 					 }
@@ -344,10 +442,22 @@ public class MydataTranslator implements ITranslator {
  private MydataPolicy absoluteSpatialPositionConstraint(MydataPolicy mydataPolicy, Condition absoluteSpatialPositionConstraint) {
   if(null != absoluteSpatialPositionConstraint)
   {
-   Parameter locationParam = new Parameter(ParameterType.STRING,LeftOperand.ABSOLUTE_SPATIAL_POSITION.getMydataLeftOperand()+"-uri", absoluteSpatialPositionConstraint.getRightOperand().getValue());
-   List<Parameter> pipParams = new ArrayList<>();
-   pipParams.add(locationParam);
-   
+	  List<Parameter> pipParams = new ArrayList<>();
+	  // list of locations
+  	for (RightOperand rightOperand: absoluteSpatialPositionConstraint.getRightOperands())
+	{
+		Parameter locationParam = new Parameter(ParameterType.STRING,LeftOperand.ABSOLUTE_SPATIAL_POSITION.getMydataLeftOperand()+"-uri", rightOperand.getValue());
+		pipParams.add(locationParam);
+	}
+	  Operator op = absoluteSpatialPositionConstraint.getOperator();
+	  if(op.equals(Operator.IS_ANY_OF) ||
+			  op.equals(Operator.IS_NONE_OF) ||
+			  op.equals(Operator.IS_ALL_OF))
+	  {
+		  //pass the list operator as a parameter to the PIP, too!
+		  Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+		  pipParams.add(operatorParam);
+	  }
    PIPBoolean locationPipBoolean = new PIPBoolean(this.solution, LeftOperand.ABSOLUTE_SPATIAL_POSITION, pipParams);
 
    List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
@@ -361,16 +471,19 @@ public class MydataTranslator implements ITranslator {
   if(null != timeIntervalConstraint)
   {
    List<DateTime> dateTimes = new ArrayList<>();
-   for(RightOperandEntity entity: timeIntervalConstraint.getRightOperand().getEntities())
+	  //semantically, the time conditions cannot get more than one right operand; time conflicts occurs.
+   for(RightOperandEntity entity: timeIntervalConstraint.getRightOperands().get(0).getEntities())
    {
 	   switch (entity.getEntityType()) {
 		   case BEGIN:
-			   String start = entity.getValue();
+			   RightOperandEntity beginInnerEntity = entity.getInnerEntity();
+			   String start = beginInnerEntity.getValue();
 			   DateTime startTime = new DateTime(IntervalCondition.GT, start);
 			   dateTimes.add(startTime);
 			   break;
 		   case END:
-			   String end = entity.getValue();
+			   RightOperandEntity endInnerEntity = entity.getInnerEntity();
+			   String end = endInnerEntity.getValue();
 			   DateTime endTime = new DateTime(IntervalCondition.LT, end);
 			   dateTimes.add(endTime);
 			   break;
@@ -386,18 +499,26 @@ private MydataPolicy dateTimeConstraint(MydataPolicy mydataPolicy, Condition dat
 	if(null != dateTimeConstraint)
 	{
 		List<DateTime> dateTimes = new ArrayList<>();
-		for(RightOperandEntity entity: dateTimeConstraint.getRightOperand().getEntities())
+		//semantically, the time conditions cannot get more than one right operand; time conflicts occurs.
+		for(RightOperandEntity entity: dateTimeConstraint.getRightOperands().get(0).getEntities())
 		{
 			switch (entity.getEntityType()) {
 				case BEGIN:
-					String start = entity.getValue();
-					DateTime startTime = new DateTime(IntervalCondition.GT, start);
+					RightOperandEntity beginInnerEntity = entity.getInnerEntity();
+					String startDateTime = beginInnerEntity.getValue();
+					DateTime startTime = new DateTime(IntervalCondition.GT, startDateTime);
 					dateTimes.add(startTime);
 					break;
 				case END:
-					String end = entity.getValue();
-					DateTime endTime = new DateTime(IntervalCondition.LT, end);
+					RightOperandEntity endInnerEntity = entity.getInnerEntity();
+					String endDatetime = endInnerEntity.getValue();
+					DateTime endTime = new DateTime(IntervalCondition.LT, endDatetime);
 					dateTimes.add(endTime);
+					break;
+				case DATETIME:
+					String datetime = entity.getValue();
+					DateTime dTime = new DateTime(IntervalCondition.LT, datetime);
+					dateTimes.add(dTime);
 					break;
 			}
 		}
@@ -428,13 +549,25 @@ private MydataPolicy targetConstraint(MydataPolicy mydataPolicy, String target) 
  private MydataPolicy purposeConstraint(MydataPolicy mydataPolicy, Condition purposeConstraint) {
   if(null != purposeConstraint)
   {
-   Parameter purposeParam = new Parameter(ParameterType.STRING, LeftOperand.PURPOSE.getMydataLeftOperand()+"-uri", purposeConstraint.getRightOperand().getValue());
+	  List<Parameter> pipParams = new ArrayList<>();
+	  // list of purposes
+  	for(RightOperand rightOperand: purposeConstraint.getRightOperands())
+	{
+		Parameter purposeParam = new Parameter(ParameterType.STRING, LeftOperand.PURPOSE.getMydataLeftOperand()+"-uri", rightOperand.getValue());
+		pipParams.add(purposeParam);
+	}
+	  Operator op = purposeConstraint.getOperator();
+	  if(op.equals(Operator.IS_ANY_OF) ||
+			  op.equals(Operator.IS_NONE_OF) ||
+			  op.equals(Operator.IS_ALL_OF))
+	  {
+		  //pass the list operator as a parameter to the PIP, too!
+		  Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+		  pipParams.add(operatorParam);
+	  }
    Event event = new Event(ParameterType.STRING, "MsgTarget", "appUri");
    Parameter msgTargetParam = new Parameter(ParameterType.STRING, "MsgTargetAppUri", event);
 
-
-   List<Parameter> pipParams = new ArrayList<>();
-   pipParams.add(purposeParam);
    pipParams.add(msgTargetParam);
    PIPBoolean purposePipBoolean = new PIPBoolean(this.solution, LeftOperand.PURPOSE, pipParams);
 
@@ -448,10 +581,22 @@ private MydataPolicy targetConstraint(MydataPolicy mydataPolicy, String target) 
  private MydataPolicy systemConstraint(MydataPolicy mydataPolicy, Condition systemConstraint) {
 		if(null != systemConstraint)
 		{
-			Parameter systemParam = new Parameter(ParameterType.STRING,LeftOperand.SYSTEM.getMydataLeftOperand()+"-uri", systemConstraint.getRightOperand().getValue());
-
 			List<Parameter> pipParams = new ArrayList<>();
-			pipParams.add(systemParam);
+			// list of systems
+			for(RightOperand rightOperand: systemConstraint.getRightOperands())
+			{
+				Parameter systemParam = new Parameter(ParameterType.STRING,LeftOperand.SYSTEM.getMydataLeftOperand()+"-uri", rightOperand.getValue());
+				pipParams.add(systemParam);
+			}
+			Operator op = systemConstraint.getOperator();
+			if(op.equals(Operator.IS_ANY_OF) ||
+					op.equals(Operator.IS_NONE_OF) ||
+					op.equals(Operator.IS_ALL_OF))
+			{
+				//pass the list operator as a parameter to the PIP, too!
+				Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+				pipParams.add(operatorParam);
+			}
 			PIPBoolean systemPipBoolean = new PIPBoolean(this.solution, LeftOperand.SYSTEM, pipParams);
 
 			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
@@ -464,10 +609,22 @@ private MydataPolicy targetConstraint(MydataPolicy mydataPolicy, String target) 
 	private MydataPolicy applicationConstraint(MydataPolicy mydataPolicy, Condition applicationConstraint) {
 		if(null != applicationConstraint)
 		{
-			Parameter applicationParam = new Parameter(ParameterType.STRING,LeftOperand.APPLICATION.getMydataLeftOperand()+"-uri", applicationConstraint.getRightOperand().getValue());
-
 			List<Parameter> pipParams = new ArrayList<>();
-			pipParams.add(applicationParam);
+			//list of applications
+			for (RightOperand rightOperand: applicationConstraint.getRightOperands())
+			{
+				Parameter applicationParam = new Parameter(ParameterType.STRING,LeftOperand.APPLICATION.getMydataLeftOperand()+"-uri", rightOperand.getValue());
+				pipParams.add(applicationParam);
+			}
+			Operator op = applicationConstraint.getOperator();
+			if(op.equals(Operator.IS_ANY_OF) ||
+					op.equals(Operator.IS_NONE_OF) ||
+					op.equals(Operator.IS_ALL_OF))
+			{
+				//pass the list operator as a parameter to the PIP, too!
+				Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+				pipParams.add(operatorParam);
+			}
 			PIPBoolean applicationPipBoolean = new PIPBoolean(this.solution, LeftOperand.APPLICATION, pipParams);
 
 			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
@@ -480,10 +637,23 @@ private MydataPolicy targetConstraint(MydataPolicy mydataPolicy, String target) 
 	private MydataPolicy connectorConstraint(MydataPolicy mydataPolicy, Condition connectorConstraint) {
 		if(null != connectorConstraint)
 		{
-			Parameter connectorParam = new Parameter(ParameterType.STRING,LeftOperand.CONNECTOR.getMydataLeftOperand()+"-uri", connectorConstraint.getRightOperand().getValue());
-
 			List<Parameter> pipParams = new ArrayList<>();
-			pipParams.add(connectorParam);
+			//List of connectors
+			for(RightOperand rightOperand: connectorConstraint.getRightOperands())
+			{
+				Parameter connectorParam = new Parameter(ParameterType.STRING,LeftOperand.CONNECTOR.getMydataLeftOperand()+"-uri", rightOperand.getValue());
+				pipParams.add(connectorParam);
+			}
+			Operator op = connectorConstraint.getOperator();
+			if(op.equals(Operator.IS_ANY_OF) ||
+					op.equals(Operator.IS_NONE_OF) ||
+					op.equals(Operator.IS_ALL_OF))
+			{
+				//pass the list operator as a parameter to the PIP, too!
+				Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+				pipParams.add(operatorParam);
+			}
+
 			PIPBoolean connectorPipBoolean = new PIPBoolean(this.solution, LeftOperand.CONNECTOR, pipParams);
 
 			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
@@ -496,10 +666,23 @@ private MydataPolicy targetConstraint(MydataPolicy mydataPolicy, String target) 
 	private MydataPolicy securityLevelConstraint(MydataPolicy mydataPolicy, Condition securityLevelConstraint) {
 		if(null != securityLevelConstraint)
 		{
-			Parameter securityLevelParam = new Parameter(ParameterType.STRING,LeftOperand.SECURITY_LEVEL.getMydataLeftOperand(), securityLevelConstraint.getRightOperand().getValue());
-
 			List<Parameter> pipParams = new ArrayList<>();
-			pipParams.add(securityLevelParam);
+			//list of security levels
+			for(RightOperand rightOperand: securityLevelConstraint.getRightOperands())
+			{
+				Parameter securityLevelParam = new Parameter(ParameterType.STRING,LeftOperand.SECURITY_LEVEL.getMydataLeftOperand(), rightOperand.getValue());
+				pipParams.add(securityLevelParam);
+			}
+			Operator op = securityLevelConstraint.getOperator();
+			if(op.equals(Operator.IS_ANY_OF) ||
+					op.equals(Operator.IS_NONE_OF) ||
+					op.equals(Operator.IS_ALL_OF))
+			{
+				//pass the list operator as a parameter to the PIP, too!
+				Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+				pipParams.add(operatorParam);
+			}
+
 			PIPBoolean securityLevelPipBoolean = new PIPBoolean(this.solution, LeftOperand.SECURITY_LEVEL, pipParams);
 
 			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
@@ -512,10 +695,22 @@ private MydataPolicy targetConstraint(MydataPolicy mydataPolicy, String target) 
 	private MydataPolicy stateConstraint(MydataPolicy mydataPolicy, Condition stateConstraint) {
 		if(null != stateConstraint)
 		{
-			Parameter stateParam = new Parameter(ParameterType.STRING,LeftOperand.STATE.getMydataLeftOperand(), stateConstraint.getRightOperand().getValue());
-
 			List<Parameter> pipParams = new ArrayList<>();
-			pipParams.add(stateParam);
+			//list of states
+			for(RightOperand rightOperand: stateConstraint.getRightOperands())
+			{
+				Parameter stateParam = new Parameter(ParameterType.STRING,LeftOperand.STATE.getMydataLeftOperand(), rightOperand.getValue());
+				pipParams.add(stateParam);
+			}
+			Operator op = stateConstraint.getOperator();
+			if(op.equals(Operator.IS_ANY_OF) ||
+					op.equals(Operator.IS_NONE_OF) ||
+					op.equals(Operator.IS_ALL_OF))
+			{
+				//pass the list operator as a parameter to the PIP, too!
+				Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+				pipParams.add(operatorParam);
+			}
 			PIPBoolean statePipBoolean = new PIPBoolean(this.solution, LeftOperand.STATE, pipParams);
 
 			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
@@ -528,10 +723,22 @@ private MydataPolicy targetConstraint(MydataPolicy mydataPolicy, String target) 
 	private MydataPolicy roleConstraint(MydataPolicy mydataPolicy, Condition roleConstraint) {
 		if(null != roleConstraint)
 		{
-			Parameter roleParam = new Parameter(ParameterType.STRING,LeftOperand.ROLE.getMydataLeftOperand(), roleConstraint.getRightOperand().getValue());
-
 			List<Parameter> pipParams = new ArrayList<>();
-			pipParams.add(roleParam);
+			//list of roles
+			for(RightOperand rightOperand: roleConstraint.getRightOperands())
+			{
+				Parameter roleParam = new Parameter(ParameterType.STRING,LeftOperand.ROLE.getMydataLeftOperand(), rightOperand.getValue());
+				pipParams.add(roleParam);
+			}
+			Operator op = roleConstraint.getOperator();
+			if(op.equals(Operator.IS_ANY_OF) ||
+					op.equals(Operator.IS_NONE_OF) ||
+					op.equals(Operator.IS_ALL_OF))
+			{
+				//pass the list operator as a parameter to the PIP, too!
+				Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+				pipParams.add(operatorParam);
+			}
 			PIPBoolean rolePipBoolean = new PIPBoolean(this.solution, LeftOperand.ROLE, pipParams);
 
 			List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
@@ -544,7 +751,8 @@ private MydataPolicy targetConstraint(MydataPolicy mydataPolicy, String target) 
  private MydataPolicy paymentConstraint(MydataPolicy mydataPolicy, Condition paymentConstraint) {
   if(null != paymentConstraint)
   {
-   Parameter valueParam = new Parameter(ParameterType.NUMBER,"value",String.valueOf(paymentConstraint.getRightOperand().getValue()));
+  	// semantically, only one value must be set for the payment; conflict occurs!
+   Parameter valueParam = new Parameter(ParameterType.NUMBER,"value",String.valueOf(paymentConstraint.getRightOperands().get(0).getValue()));
    Parameter contractParam = new Parameter(ParameterType.STRING,"value", paymentConstraint.getContract());
    List<Parameter> pipParams = new ArrayList<>();
    pipParams.add(valueParam);
@@ -561,16 +769,31 @@ private MydataPolicy targetConstraint(MydataPolicy mydataPolicy, String target) 
  private MydataPolicy eventConstraint(MydataPolicy mydataPolicy, Condition eventConstraint) {
   if(null != eventConstraint)
   {
-   Parameter eventParam = new Parameter(ParameterType.STRING,"event-uri", eventConstraint.getRightOperand().getValue());
-   List<Parameter> eventParams = new ArrayList<>();
-   eventParams.add(eventParam);
-   Count eventFirstOperand = new Count(this.solution, LeftOperand.EVENT, null, eventParams, FixedTime.THIS_HOUR);
-   Constant eventSecondOperand = new Constant(ParameterType.NUMBER, "1");
-   MydataCondition eventCondition = new MydataCondition(eventFirstOperand, Operator.GTEQ, eventSecondOperand);
-   //set conditions
-   List<MydataCondition> cons = mydataPolicy.getConditions();
-   cons.add(eventCondition);
-   mydataPolicy.setConditions(cons);
+	  List<Parameter> pipParams = new ArrayList<>();
+	  // list of events occurring right now!
+	  for(RightOperand rightOperand: eventConstraint.getRightOperands())
+	  {
+		  Parameter eventParam = new Parameter(ParameterType.STRING, LeftOperand.EVENT.getMydataLeftOperand()+"-uri", rightOperand.getValue());
+		  pipParams.add(eventParam);
+	  }
+	  Operator op = eventConstraint.getOperator();
+	  if(op.equals(Operator.IS_ANY_OF) ||
+			  op.equals(Operator.IS_NONE_OF) ||
+			  op.equals(Operator.IS_ALL_OF))
+	  {
+		  //pass the list operator as a parameter to the PIP, too!
+		  Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+		  pipParams.add(operatorParam);
+	  }
+	  Event event = new Event(ParameterType.STRING, "MsgTarget", "appUri");
+	  Parameter msgTargetParam = new Parameter(ParameterType.STRING, "MsgTargetAppUri", event);
+
+	  pipParams.add(msgTargetParam);
+	  PIPBoolean eventPipBoolean = new PIPBoolean(this.solution, LeftOperand.EVENT, pipParams);
+
+	  List<PIPBoolean> pips = mydataPolicy.getPipBooleans();
+	  pips.add(eventPipBoolean);
+	  mydataPolicy.setPipBooleans(pips);
   }
   return mydataPolicy;
  }
