@@ -3,12 +3,7 @@ package de.fraunhofer.iese.ids.odrl.mydata.translator.util;
 import java.util.Arrays;
 import java.util.List;
 
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.Constant;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.Event;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.EventParameter;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.MydataCondition;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.MydataPolicy;
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.ParameterType;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.*;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.Duration;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.OdrlPolicy;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ActionType;
@@ -22,8 +17,18 @@ public class BuildMydataPolicyUtils {
 	private BuildMydataPolicyUtils() {
 
 	}
+	public static MydataPolicy buildPolicy(OdrlPolicy odrlPolicy, String solution) {
+		//set mydataPolicy id
+		String pid = "";
+		if (null != odrlPolicy.getPolicyId()) {
+			pid = getName(odrlPolicy.getPolicyId().toString());
+		}
 
-	public static MydataPolicy buildPolicy(OdrlPolicy odrlPolicy, ActionType actionType, RuleType ruleType, String solution) {
+		return new MydataPolicy(pid, solution);
+	}
+
+
+	public static MydataMechanism buildMechanism(OdrlPolicy odrlPolicy, ActionType actionType, RuleType ruleType, String solution) {
 
 		//set mydataPolicy action
 		ActionType action = actionType;
@@ -52,14 +57,14 @@ public class BuildMydataPolicyUtils {
 //		}
 
 		// create MYDATA MydataPolicy
-		MydataPolicy mydataPolicy = new MydataPolicy(solution, pid, action, decision, false, null);
+		MydataMechanism mydataMechanism = new MydataMechanism(solution, action, decision, false, null);
 		//List<MydataCondition> cons = mydataPolicy.getConditions();
 		//cons.add(targetCondition);
 //		cons.add(consumerCondition);
 		//mydataPolicy.setConditions(cons);
 		//mydataPolicy.setTarget(target);
 
-		return mydataPolicy;
+		return mydataMechanism;
 	}
 
 	public static String getSolution(OdrlPolicy odrlPolicy)
