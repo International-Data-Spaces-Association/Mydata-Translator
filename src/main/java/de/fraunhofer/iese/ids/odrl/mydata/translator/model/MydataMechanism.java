@@ -56,6 +56,7 @@ public class MydataMechanism {
 
  private String getDecisionBlock() {
 
+  RuleType elseDecision = getElseDecision();
   String thenBlock = "";
   String elseBlock = "";
   if(null != modifiers)
@@ -65,8 +66,17 @@ public class MydataMechanism {
     thenBlock = thenBlock.concat("\r\n" + modifier.toString());
    }
   }
-  //if(decision.equals(RuleType.OBLIGATION) || (decision.equals(RuleType.PERMISSION) && this.hasDuty))
-  //{
+
+  if(thenBlock.isEmpty())
+  {
+   thenBlock = thenBlock.concat("        <" + decision.getMydataDecision() + "/> \r\n");
+  }
+
+  if(elseBlock.isEmpty())
+  {
+   elseBlock = elseBlock.concat("        <" + elseDecision.getMydataDecision() + "/> \r\n");
+  }
+
    if(null != pxps)
    {
     for (ExecuteAction pxp: this.pxps)
@@ -88,15 +98,7 @@ public class MydataMechanism {
     }
    }
 
-  //}
-  return getDecision(thenBlock, elseBlock);
-
- }
-
- private String getDecision(String thenBlock, String elseBlock) {
-  RuleType elseDecision = getElseDecision();
-  return  "        <then> \n"
-          + "        <" + decision.getMydataDecision() + "/> \n"
+  return  "        <then> \r\n"
           + thenBlock
           + "        </then>  \r\n"
           + "      </if>   \r\n"
@@ -105,10 +107,10 @@ public class MydataMechanism {
           + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
           + "      </equals>\n"
           + "      <then>\n"
-          + "          <" + elseDecision.getMydataDecision() + "/>  \r\n"
           + elseBlock
           + "      </then>\n"
           + "    </elseif>\n" ;
+
  }
 
  private RuleType getElseDecision() {
