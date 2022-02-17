@@ -1,11 +1,8 @@
 package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 
 
-import java.util.ArrayList;
 import java.util.List;
 
-import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ActionType;
-import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.RuleType;
 import lombok.Data;
 
 @Data
@@ -13,7 +10,7 @@ public class MydataPolicy {
  Timer timer;
  String pid;
  String solution;
-ArrayList<MydataMechanism> mechanisms;
+List<MydataMechanism> mechanisms;
 
  public MydataPolicy(String pid, String solution)
  {
@@ -21,7 +18,7 @@ ArrayList<MydataMechanism> mechanisms;
   this.solution = solution;
  }
 
- public MydataPolicy(String pid, String solution, ArrayList<MydataMechanism> mechanisms)
+ public MydataPolicy(String pid, String solution, List<MydataMechanism> mechanisms)
  {
   this.pid = pid;
   this.solution = solution;

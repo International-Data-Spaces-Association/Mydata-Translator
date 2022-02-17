@@ -5,9 +5,34 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import de.fraunhofer.iese.ids.odrl.mydata.translator.model.*;
-import de.fraunhofer.iese.ids.odrl.policy.library.model.*;
-import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.*;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.Constant;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.Count;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.DateTime;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.Event;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.EventParameter;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.ExecuteAction;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.FixedTime;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.Modify;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.MydataCondition;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.MydataMechanism;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.MydataPolicy;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.PIPBoolean;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.Parameter;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.ParameterType;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.model.Timer;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.Action;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.Condition;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.OdrlPolicy;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.RightOperand;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.RightOperandEntity;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.Rule;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ActionType;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.IntervalCondition;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.LeftOperand;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.Operator;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.RightOperandType;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.RuleType;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.TimeUnit;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.interfaces.ITranslator;
 import lombok.Data;
 
@@ -27,7 +52,7 @@ public class MydataTranslator implements ITranslator {
  public MydataPolicy createMydataPolicy(OdrlPolicy odrlPolicy) {
 	  this.solution = BuildMydataPolicyUtils.getSolution(odrlPolicy);
 	  MydataPolicy mydataPolicy = BuildMydataPolicyUtils.buildPolicy(odrlPolicy, this.solution);
-	  ArrayList<MydataMechanism> mydataMechanisms = new ArrayList<>();
+	  List<MydataMechanism> mydataMechanisms = new ArrayList<>();
 	  if(null != odrlPolicy.getRules() && !odrlPolicy.getRules().isEmpty())
 	  {
 	  	for(Rule rule: odrlPolicy.getRules())
@@ -36,7 +61,7 @@ public class MydataTranslator implements ITranslator {
 			RuleType ruleType = rule.getType();
 			if(null != action)
 			{
-				MydataMechanism mydataMechanism = BuildMydataPolicyUtils.buildMechanism(odrlPolicy, action.getType(), ruleType, this.solution);
+				MydataMechanism mydataMechanism = new MydataMechanism(this.solution, action.getType(), ruleType, false, null);
 
 				// set target condition to mechanism
 				if(null != rule.getTarget())
@@ -45,7 +70,7 @@ public class MydataTranslator implements ITranslator {
 				}
 
 				if(rule.getType().equals(RuleType.OBLIGATION)){
-					ArrayList<ExecuteAction> pxps = new ArrayList<>();
+					List<ExecuteAction> pxps = new ArrayList<>();
 					if(null != action.getRefinements())
 					{
 						for(Condition odrlRefinement: action.getRefinements()) {
@@ -75,7 +100,7 @@ public class MydataTranslator implements ITranslator {
 								}
 
 								PIPBoolean delayPeriodPipBoolean = new PIPBoolean(solution, LeftOperand.DELAY, pipParams);
-								ArrayList<PIPBoolean> pips = mydataMechanism.getPipBooleans();
+								List<PIPBoolean> pips = mydataMechanism.getPipBooleans();
 								pips.add(delayPeriodPipBoolean);
 								mydataMechanism.setPipBooleans(pips);
 
@@ -166,13 +191,13 @@ public class MydataTranslator implements ITranslator {
 					}
 				}
 
-				ArrayList<ExecuteAction> pxps = new ArrayList<>();
-				ArrayList<Modify> modifiers = new ArrayList<>();
+				List<ExecuteAction> pxps = new ArrayList<>();
+				List<Modify> modifiers = new ArrayList<>();
 				if(null != rule.getPreduties() && !rule.getPreduties().isEmpty()) {
 					for (Rule preobligation : rule.getPreduties()) {
 						ActionType actionType = preobligation.getAction().getType();
 						if (actionType.equals(ActionType.ANONYMIZE) || actionType.equals(ActionType.REPLACE) || actionType.equals(ActionType.DELETE)) {
-							ArrayList<Condition> odrlRefinements = preobligation.getAction().getRefinements();
+							List<Condition> odrlRefinements = preobligation.getAction().getRefinements();
 							Modify anonymizeModifier = anonymizePreobligation(actionType, odrlRefinements);
 							modifiers.add(anonymizeModifier);
 						} else if (actionType.equals(ActionType.NEXT_POLICY)) {
@@ -189,7 +214,7 @@ public class MydataTranslator implements ITranslator {
 				if(null != rule.getPostduties() && !rule.getPostduties().isEmpty()) {
 					for (Rule postobligation : rule.getPostduties()) {
 						ActionType actionType = postobligation.getAction().getType();
-						ArrayList<Condition> odrlRefinements = postobligation.getAction().getRefinements();
+						List<Condition> odrlRefinements = postobligation.getAction().getRefinements();
 						if (actionType.equals(ActionType.DELETE)) {
 							ExecuteAction deletePXP = deletePostobligation(actionType, odrlRefinements);
 							pxps.add(deletePXP);
@@ -248,7 +273,7 @@ public class MydataTranslator implements ITranslator {
 			}
 
 			PIPBoolean elapsedTimePipBoolean = new PIPBoolean(solution, LeftOperand.ELAPSED_TIME, timePIPParams);
-			ArrayList<PIPBoolean> timePIPs = mydataMechanism.getPipBooleans();
+			List<PIPBoolean> timePIPs = mydataMechanism.getPipBooleans();
 			timePIPs.add(elapsedTimePipBoolean);
 			mydataMechanism.setPipBooleans(timePIPs);
 		}
@@ -271,7 +296,7 @@ public class MydataTranslator implements ITranslator {
 				artifactPIPParams.add(operatorParam);
 			}
 			PIPBoolean artifactStatePipBoolean = new PIPBoolean(this.solution, odrlConstraint.getLeftOperand(), artifactPIPParams);
-			ArrayList<PIPBoolean> artifactPIPs = mydataMechanism.getPipBooleans();
+			List<PIPBoolean> artifactPIPs = mydataMechanism.getPipBooleans();
 			artifactPIPs.add(artifactStatePipBoolean);
 			mydataMechanism.setPipBooleans(artifactPIPs);
 		}
@@ -294,7 +319,7 @@ public class MydataTranslator implements ITranslator {
 				pipParams.add(operatorParam);
 			}
 			PIPBoolean encodingPipBoolean = new PIPBoolean(this.solution, odrlConstraint.getLeftOperand(), pipParams);
-			ArrayList<PIPBoolean> pips = mydataMechanism.getPipBooleans();
+			List<PIPBoolean> pips = mydataMechanism.getPipBooleans();
 			pips.add(encodingPipBoolean);
 			mydataMechanism.setPipBooleans(pips);
 		}
@@ -309,7 +334,7 @@ public class MydataTranslator implements ITranslator {
 			//semantically, the count conditions cannot get more than one right operand; counter conflict occurs.
 			Constant countSecondOperand = new Constant(ParameterType.NUMBER, odrlConstraint.getRightOperands().get(0).getValue());
 			MydataCondition countCondition = new MydataCondition(countFirstOperand, Operator.LT, countSecondOperand);
-			ArrayList<MydataCondition> cons = mydataMechanism.getConditions();
+			List<MydataCondition> cons = mydataMechanism.getConditions();
 			cons.add(countCondition);
 			mydataMechanism.setConditions(cons);
 		}
@@ -330,7 +355,7 @@ public class MydataTranslator implements ITranslator {
 	}
 
 	private ExecuteAction nextPolicyPreobligation(ActionType nextpolicy, Condition odrlRefinement) {
-		ArrayList<Parameter> params = new ArrayList<>();
+		List<Parameter> params = new ArrayList<>();
 		// list of target policies (offer contracts)
 		for(RightOperand rightOperand: odrlRefinement.getRightOperands())
 		{
@@ -349,8 +374,8 @@ public class MydataTranslator implements ITranslator {
 		return new ExecuteAction(solution, nextpolicy, params);
 	 }
 
- private ExecuteAction informPostobligation(ActionType inform, ArrayList<Condition> odrlRefinements) {
-	 ArrayList<Parameter> params = new ArrayList<>();
+ private ExecuteAction informPostobligation(ActionType inform, List<Condition> odrlRefinements) {
+	 List<Parameter> params = new ArrayList<>();
 	 if(null != odrlRefinements) {
 		 for (Condition odrlRefinement : odrlRefinements) {
 		 	// list of recipients or informed parties
@@ -384,8 +409,8 @@ public class MydataTranslator implements ITranslator {
   	return new ExecuteAction(solution, inform, params);
  }
 
- private ExecuteAction logPostobligation(ActionType log, ArrayList<Condition> odrlRefinements) {
-	 ArrayList<Parameter> params = new ArrayList<>();
+ private ExecuteAction logPostobligation(ActionType log, List<Condition> odrlRefinements) {
+	 List<Parameter> params = new ArrayList<>();
 	 if(null != odrlRefinements) {
 		 for (Condition odrlRefinement : odrlRefinements) {
 		 	//list of system devices
@@ -416,7 +441,7 @@ public class MydataTranslator implements ITranslator {
 
  }
 
- private Modify anonymizePreobligation(ActionType actionType, ArrayList<Condition> odrlRefinements) {
+ private Modify anonymizePreobligation(ActionType actionType, List<Condition> odrlRefinements) {
 
 	 String eventParameterToModify = "DataObject";
 	 List<Parameter> params = null;
@@ -443,8 +468,8 @@ public class MydataTranslator implements ITranslator {
 	 return new Modify(eventParameterToModify, actionType, jsonPathQuery, params);
  }
 
- private ExecuteAction deletePostobligation(ActionType delete, ArrayList<Condition> odrlRefinements) {
-	 ArrayList<Parameter> params = new ArrayList<>();
+ private ExecuteAction deletePostobligation(ActionType delete, List<Condition> odrlRefinements) {
+	 List<Parameter> params = new ArrayList<>();
 	 if(null != odrlRefinements) {
 		 for (Condition odrlRefinement : odrlRefinements) {
 			 if (null != odrlRefinement) {
@@ -506,7 +531,7 @@ public class MydataTranslator implements ITranslator {
  private MydataMechanism absoluteSpatialPositionConstraint(MydataMechanism mydataMechanism, Condition odrlConstraint) {
   if(null != odrlConstraint)
   {
-	  ArrayList<Parameter> pipParams = new ArrayList<>();
+	  List<Parameter> pipParams = new ArrayList<>();
 	  // list of locations
   	for (RightOperand rightOperand: odrlConstraint.getRightOperands())
 	{
@@ -524,7 +549,7 @@ public class MydataTranslator implements ITranslator {
 	  }
    PIPBoolean locationPipBoolean = new PIPBoolean(this.solution, odrlConstraint.getLeftOperand(), pipParams);
 
-   ArrayList<PIPBoolean> pips = mydataMechanism.getPipBooleans();
+   List<PIPBoolean> pips = mydataMechanism.getPipBooleans();
    pips.add(locationPipBoolean);
 	  mydataMechanism.setPipBooleans(pips);
   }
@@ -534,7 +559,7 @@ public class MydataTranslator implements ITranslator {
  private MydataMechanism timeIntervalConstraint(MydataMechanism mydataMechanism, Condition odrlConstraint) {
   if(null != odrlConstraint)
   {
-   ArrayList<DateTime> dateTimes = new ArrayList<>();
+   List<DateTime> dateTimes = new ArrayList<>();
 	  //semantically, the time conditions cannot get more than one right operand; time conflicts occurs.
    for(RightOperandEntity entity: odrlConstraint.getRightOperands().get(0).getEntities())
    {
@@ -562,7 +587,7 @@ public class MydataTranslator implements ITranslator {
 private MydataMechanism dateTimeConstraint( MydataMechanism mydataMechanism, Condition odrlConstraint) {
 	if(null != odrlConstraint)
 	{
-		ArrayList<DateTime> dateTimes = new ArrayList<>();
+		List<DateTime> dateTimes = new ArrayList<>();
 		//semantically, the time conditions cannot get more than one right operand; time conflicts occurs.
 		for(RightOperandEntity entity: odrlConstraint.getRightOperands().get(0).getEntities())
 		{
@@ -603,7 +628,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 		//set conditions
 		mydataMechanism.setTarget(target);
 
-		ArrayList<MydataCondition> cons = mydataMechanism.getConditions();
+		List<MydataCondition> cons = mydataMechanism.getConditions();
 		cons.add(targetCondition);
 		mydataMechanism.setConditions(cons);
 	}
@@ -635,7 +660,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
    pipParams.add(msgTargetParam);
    PIPBoolean purposePipBoolean = new PIPBoolean(this.solution, odrlConstraint.getLeftOperand(), pipParams);
 
-   ArrayList<PIPBoolean> pips = mydataMechanism.getPipBooleans();
+   List<PIPBoolean> pips = mydataMechanism.getPipBooleans();
    pips.add(purposePipBoolean);
 	  mydataMechanism.setPipBooleans(pips);
   }
@@ -663,7 +688,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 			}
 			PIPBoolean systemPipBoolean = new PIPBoolean(this.solution, odrlConstraint.getLeftOperand(), pipParams);
 
-			ArrayList<PIPBoolean> pips = mydataMechanism.getPipBooleans();
+			List<PIPBoolean> pips = mydataMechanism.getPipBooleans();
 			pips.add(systemPipBoolean);
 			mydataMechanism.setPipBooleans(pips);
 		}
@@ -691,7 +716,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 			}
 			PIPBoolean applicationPipBoolean = new PIPBoolean(this.solution, odrlConstraint.getLeftOperand(), pipParams);
 
-			ArrayList<PIPBoolean> pips = mydataMechanism.getPipBooleans();
+			List<PIPBoolean> pips = mydataMechanism.getPipBooleans();
 			pips.add(applicationPipBoolean);
 			mydataMechanism.setPipBooleans(pips);
 		}
@@ -720,7 +745,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 
 			PIPBoolean connectorPipBoolean = new PIPBoolean(this.solution, odrlConstraint.getLeftOperand(), pipParams);
 
-			ArrayList<PIPBoolean> pips = mydataMechanism.getPipBooleans();
+			List<PIPBoolean> pips = mydataMechanism.getPipBooleans();
 			pips.add(connectorPipBoolean);
 			mydataMechanism.setPipBooleans(pips);
 		}
@@ -749,7 +774,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 
 			PIPBoolean securityLevelPipBoolean = new PIPBoolean(this.solution, odrlConstraint.getLeftOperand(), pipParams);
 
-			ArrayList<PIPBoolean> pips = mydataMechanism.getPipBooleans();
+			List<PIPBoolean> pips = mydataMechanism.getPipBooleans();
 			pips.add(securityLevelPipBoolean);
 			mydataMechanism.setPipBooleans(pips);
 		}
@@ -777,7 +802,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 			}
 			PIPBoolean statePipBoolean = new PIPBoolean(this.solution, odrlConstraint.getLeftOperand(), pipParams);
 
-			ArrayList<PIPBoolean> pips = mydataMechanism.getPipBooleans();
+			List<PIPBoolean> pips = mydataMechanism.getPipBooleans();
 			pips.add(statePipBoolean);
 			mydataMechanism.setPipBooleans(pips);
 		}
@@ -805,7 +830,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 			}
 			PIPBoolean rolePipBoolean = new PIPBoolean(this.solution, odrlConstraint.getLeftOperand(), pipParams);
 
-			ArrayList<PIPBoolean> pips = mydataMechanism.getPipBooleans();
+			List<PIPBoolean> pips = mydataMechanism.getPipBooleans();
 			pips.add(rolePipBoolean);
 			mydataMechanism.setPipBooleans(pips);
 		}
@@ -823,7 +848,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
    pipParams.add(contractParam);
    PIPBoolean paymentPipBoolean = new PIPBoolean(this.solution, odrlConstraint.getLeftOperand(), pipParams);
 
-	  ArrayList<PIPBoolean> pips = mydataMechanism.getPipBooleans();
+	  List<PIPBoolean> pips = mydataMechanism.getPipBooleans();
    pips.add(paymentPipBoolean);
 	  mydataMechanism.setPipBooleans(pips);
   }
@@ -855,7 +880,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 	  pipParams.add(msgTargetParam);
 	  PIPBoolean eventPipBoolean = new PIPBoolean(this.solution, odrlConstraint.getLeftOperand(), pipParams);
 
-	  ArrayList<PIPBoolean> pips = mydataMechanism.getPipBooleans();
+	  List<PIPBoolean> pips = mydataMechanism.getPipBooleans();
 	  pips.add(eventPipBoolean);
 	  mydataMechanism.setPipBooleans(pips);
   }

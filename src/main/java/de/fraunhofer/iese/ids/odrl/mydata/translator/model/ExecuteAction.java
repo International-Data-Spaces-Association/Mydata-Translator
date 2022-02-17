@@ -1,7 +1,6 @@
 package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 
 
-import java.util.ArrayList;
 import java.util.List;
 
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ActionType;
@@ -12,9 +11,9 @@ public class ExecuteAction {
 
  String solution;
  ActionType action;
- ArrayList<Parameter> parameters;
+ List<Parameter> parameters;
 
- public ExecuteAction(String solution, ActionType action, ArrayList<Parameter> parameters) {
+ public ExecuteAction(String solution, ActionType action, List<Parameter> parameters) {
   this.solution = solution;
   this.action = action;
   this.parameters = parameters;

@@ -1,26 +1,27 @@
 package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ActionType;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.RuleType;
 import lombok.Data;
 
-import java.util.ArrayList;
-
 @Data
 public class MydataMechanism {
- ArrayList<MydataCondition> conditions;
- ArrayList<PIPBoolean> pipBooleans;
- ArrayList<DateTime> dateTimes;
+ List<MydataCondition> conditions;
+ List<PIPBoolean> pipBooleans;
+ List<DateTime> dateTimes;
  String solution;
  ActionType action;
  RuleType decision;
- ArrayList<ExecuteAction> pxps;
+ List<ExecuteAction> pxps;
  boolean hasDuty;
- ArrayList<Modify> modifiers;
+ List<Modify> modifiers;
  String target;
 
- public MydataMechanism(String solution, ActionType action, RuleType decision, boolean hasDuty, ArrayList<Modify> modifiers)
+ public MydataMechanism(String solution, ActionType action, RuleType decision, boolean hasDuty, List<Modify> modifiers)
  {
   this.conditions = new ArrayList<>();
   this.pipBooleans = new ArrayList<>();
