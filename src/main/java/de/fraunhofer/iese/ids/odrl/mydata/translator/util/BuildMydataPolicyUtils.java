@@ -65,7 +65,7 @@ public class BuildMydataPolicyUtils {
 	public static String getName(String uri) {
 		// sample: http://example.com/policy/notify
 		String[] termSplit = uri.toString().split("/");
-		return termSplit[6];
+		return termSplit[termSplit.length-1];
 	}
 
 }
