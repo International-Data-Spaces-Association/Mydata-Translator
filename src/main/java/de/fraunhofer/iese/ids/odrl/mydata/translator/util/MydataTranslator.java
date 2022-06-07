@@ -284,7 +284,7 @@ public class MydataTranslator implements ITranslator {
 		if(null != odrlConstraint) {
 			List<Parameter> artifactPIPParams = new ArrayList<>();
 			for (RightOperand rightOperand : odrlConstraint.getRightOperands()) {
-				Parameter artifactStateParam = new Parameter(ParameterType.STRING, odrlConstraint.getLeftOperand().getMydataLeftOperand(), rightOperand.getValue());
+				Parameter artifactStateParam = new Parameter(ParameterType.STRING, odrlConstraint.getLeftOperand().getLabel(), rightOperand.getValue());
 				artifactPIPParams.add(artifactStateParam);
 			}
 			Operator artifactOp = odrlConstraint.getOperator();
@@ -307,7 +307,7 @@ public class MydataTranslator implements ITranslator {
 		if(null != odrlConstraint) {
 			List<Parameter> pipParams = new ArrayList<>();
 			for (RightOperand rightOperand : odrlConstraint.getRightOperands()) {
-				Parameter encodingParam = new Parameter(ParameterType.STRING, odrlConstraint.getLeftOperand().getMydataLeftOperand() + "-uri", rightOperand.getValue());
+				Parameter encodingParam = new Parameter(ParameterType.STRING, odrlConstraint.getLeftOperand().getLabel() + "-uri", rightOperand.getValue());
 				pipParams.add(encodingParam);
 			}
 			Operator op = odrlConstraint.getOperator();
@@ -359,7 +359,7 @@ public class MydataTranslator implements ITranslator {
 		// list of target policies (offer contracts)
 		for(RightOperand rightOperand: odrlRefinement.getRightOperands())
 		{
-			Parameter nextPolicyTargetParam = new Parameter(ParameterType.STRING, LeftOperand.TARGET_POLICY.getMydataLeftOperand() + "-uri", rightOperand.getValue());
+			Parameter nextPolicyTargetParam = new Parameter(ParameterType.STRING, LeftOperand.TARGET_POLICY.getLabel() + "-uri", rightOperand.getValue());
 			params.add(nextPolicyTargetParam);
 		}
 		Operator op = odrlRefinement.getOperator();
@@ -381,17 +381,17 @@ public class MydataTranslator implements ITranslator {
 		 	// list of recipients or informed parties
 			if (odrlRefinement.getLeftOperand().equals(LeftOperand.INFORMEDPARTY)) {
 				for(RightOperand rightOperand: odrlRefinement.getRightOperands()) {
-					Parameter informedPartyParam = new Parameter(ParameterType.STRING, LeftOperand.INFORMEDPARTY.getMydataLeftOperand() + "-uri", rightOperand.getValue());
+					Parameter informedPartyParam = new Parameter(ParameterType.STRING, LeftOperand.INFORMEDPARTY.getLabel() + "-uri", rightOperand.getValue());
 					params.add(informedPartyParam);
 				}
 			} else if (odrlRefinement.getLeftOperand().equals(LeftOperand.RECIPIENT)) {
 				for(RightOperand rightOperand: odrlRefinement.getRightOperands()) {
-					Parameter recipientParam = new Parameter(ParameterType.STRING, LeftOperand.RECIPIENT.getMydataLeftOperand() + "-uri", rightOperand.getValue());
+					Parameter recipientParam = new Parameter(ParameterType.STRING, LeftOperand.RECIPIENT.getLabel() + "-uri", rightOperand.getValue());
 					params.add(recipientParam);
 				}
 			} else if (odrlRefinement.getLeftOperand().equals(LeftOperand.NOTIFICATION_LEVEL)) {
 				for(RightOperand rightOperand: odrlRefinement.getRightOperands()) {
-					Parameter notifLevelParam = new Parameter(ParameterType.STRING, LeftOperand.NOTIFICATION_LEVEL.getMydataLeftOperand(), rightOperand.getValue());
+					Parameter notifLevelParam = new Parameter(ParameterType.STRING, LeftOperand.NOTIFICATION_LEVEL.getLabel(), rightOperand.getValue());
 					params.add(notifLevelParam);
 				}
 			}
@@ -417,12 +417,12 @@ public class MydataTranslator implements ITranslator {
 
 			if (odrlRefinement.getLeftOperand().equals(LeftOperand.SYSTEM_DEVICE)) {
 				for (RightOperand rightOperand: odrlRefinement.getRightOperands()) {
-					Parameter systemDeviceParam = new Parameter(ParameterType.STRING, LeftOperand.SYSTEM_DEVICE.getMydataLeftOperand() + "-uri", rightOperand.getValue());
+					Parameter systemDeviceParam = new Parameter(ParameterType.STRING, LeftOperand.SYSTEM_DEVICE.getLabel() + "-uri", rightOperand.getValue());
 					params.add(systemDeviceParam);
 				}
 			} else if (odrlRefinement.getLeftOperand().equals(LeftOperand.LOG_LEVEL)) {
 				for (RightOperand rightOperand: odrlRefinement.getRightOperands()) {
-					Parameter logLevelParam = new Parameter(ParameterType.STRING, LeftOperand.LOG_LEVEL.getMydataLeftOperand(), rightOperand.getValue());
+					Parameter logLevelParam = new Parameter(ParameterType.STRING, LeftOperand.LOG_LEVEL.getLabel(), rightOperand.getValue());
 					params.add(logLevelParam);
 				}
 			}
@@ -535,7 +535,7 @@ public class MydataTranslator implements ITranslator {
 	  // list of locations
   	for (RightOperand rightOperand: odrlConstraint.getRightOperands())
 	{
-		Parameter locationParam = new Parameter(ParameterType.STRING,odrlConstraint.getLeftOperand().getMydataLeftOperand()+"-uri", rightOperand.getValue());
+		Parameter locationParam = new Parameter(ParameterType.STRING,odrlConstraint.getLeftOperand().getLabel()+"-uri", rightOperand.getValue());
 		pipParams.add(locationParam);
 	}
 	  Operator op = odrlConstraint.getOperator();
@@ -642,7 +642,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 	  // list of purposes
   	for(RightOperand rightOperand: odrlConstraint.getRightOperands())
 	{
-		Parameter purposeParam = new Parameter(ParameterType.STRING, odrlConstraint.getLeftOperand().getMydataLeftOperand()+"-uri", rightOperand.getValue());
+		Parameter purposeParam = new Parameter(ParameterType.STRING, odrlConstraint.getLeftOperand().getLabel()+"-uri", rightOperand.getValue());
 		pipParams.add(purposeParam);
 	}
 	  Operator op = odrlConstraint.getOperator();
@@ -674,7 +674,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 			// list of systems
 			for(RightOperand rightOperand: odrlConstraint.getRightOperands())
 			{
-				Parameter systemParam = new Parameter(ParameterType.STRING,odrlConstraint.getLeftOperand().getMydataLeftOperand()+"-uri", rightOperand.getValue());
+				Parameter systemParam = new Parameter(ParameterType.STRING,odrlConstraint.getLeftOperand().getLabel()+"-uri", rightOperand.getValue());
 				pipParams.add(systemParam);
 			}
 			Operator op = odrlConstraint.getOperator();
@@ -702,7 +702,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 			//list of applications
 			for (RightOperand rightOperand: odrlConstraint.getRightOperands())
 			{
-				Parameter applicationParam = new Parameter(ParameterType.STRING,odrlConstraint.getLeftOperand().getMydataLeftOperand()+"-uri", rightOperand.getValue());
+				Parameter applicationParam = new Parameter(ParameterType.STRING,odrlConstraint.getLeftOperand().getLabel()+"-uri", rightOperand.getValue());
 				pipParams.add(applicationParam);
 			}
 			Operator op = odrlConstraint.getOperator();
@@ -730,7 +730,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 			//List of connectors
 			for(RightOperand rightOperand: odrlConstraint.getRightOperands())
 			{
-				Parameter connectorParam = new Parameter(ParameterType.STRING,odrlConstraint.getLeftOperand().getMydataLeftOperand()+"-uri", rightOperand.getValue());
+				Parameter connectorParam = new Parameter(ParameterType.STRING,odrlConstraint.getLeftOperand().getLabel()+"-uri", rightOperand.getValue());
 				pipParams.add(connectorParam);
 			}
 			Operator op = odrlConstraint.getOperator();
@@ -759,7 +759,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 			//list of security levels
 			for(RightOperand rightOperand: odrlConstraint.getRightOperands())
 			{
-				Parameter securityLevelParam = new Parameter(ParameterType.STRING, odrlConstraint.getLeftOperand().getMydataLeftOperand(), rightOperand.getValue());
+				Parameter securityLevelParam = new Parameter(ParameterType.STRING, odrlConstraint.getLeftOperand().getLabel(), rightOperand.getValue());
 				pipParams.add(securityLevelParam);
 			}
 			Operator op = odrlConstraint.getOperator();
@@ -788,7 +788,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 			//list of states
 			for(RightOperand rightOperand: odrlConstraint.getRightOperands())
 			{
-				Parameter stateParam = new Parameter(ParameterType.STRING, odrlConstraint.getLeftOperand().getMydataLeftOperand(), rightOperand.getValue());
+				Parameter stateParam = new Parameter(ParameterType.STRING, odrlConstraint.getLeftOperand().getLabel(), rightOperand.getValue());
 				pipParams.add(stateParam);
 			}
 			Operator op = odrlConstraint.getOperator();
@@ -816,7 +816,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 			//list of roles
 			for(RightOperand rightOperand: odrlConstraint.getRightOperands())
 			{
-				Parameter roleParam = new Parameter(ParameterType.STRING, odrlConstraint.getLeftOperand().getMydataLeftOperand(), rightOperand.getValue());
+				Parameter roleParam = new Parameter(ParameterType.STRING, odrlConstraint.getLeftOperand().getLabel(), rightOperand.getValue());
 				pipParams.add(roleParam);
 			}
 			Operator op = odrlConstraint.getOperator();
@@ -862,7 +862,7 @@ private MydataMechanism targetConstraint(MydataMechanism mydataMechanism, String
 	  // list of events occurring right now!
 	  for(RightOperand rightOperand: odrlConstraint.getRightOperands())
 	  {
-		  Parameter eventParam = new Parameter(ParameterType.STRING, odrlConstraint.getLeftOperand().getMydataLeftOperand()+"-uri", rightOperand.getValue());
+		  Parameter eventParam = new Parameter(ParameterType.STRING, odrlConstraint.getLeftOperand().getLabel()+"-uri", rightOperand.getValue());
 		  pipParams.add(eventParam);
 	  }
 	  Operator op = odrlConstraint.getOperator();
