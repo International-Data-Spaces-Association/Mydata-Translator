@@ -4,6 +4,7 @@ package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.fraunhofer.iese.ids.odrl.mydata.translator.util.MyDataUtil;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ActionType;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.RuleType;
 import lombok.Data;
@@ -15,24 +16,27 @@ public class MydataMechanism {
  List<DateTime> dateTimes;
  String solution;
  ActionType action;
- RuleType decision;
+ RuleType ruleType;
  List<ExecuteAction> pxps;
  boolean hasDuty;
  List<Modify> modifiers;
  String target;
 
- public MydataMechanism(String solution, ActionType action, RuleType decision, boolean hasDuty, List<Modify> modifiers)
+ public MydataMechanism(String solution, ActionType action, RuleType ruleType, boolean hasDuty, List<Modify> modifiers)
  {
-  this.conditions = new ArrayList<>();
-  this.pipBooleans = new ArrayList<>();
-  this.dateTimes = new ArrayList<>();
   this.solution = solution;
   this.action = action;
-  this.decision = decision;
+  this.ruleType = ruleType;
   this.hasDuty = hasDuty;
   this.modifiers = modifiers;
+  init();
  }
 
+ private void init() {
+	  this.conditions = new ArrayList<>();
+	  this.pipBooleans = new ArrayList<>();
+	  this.dateTimes = new ArrayList<>();
+ }
  @Override
  public String toString() {
 		String mydataMechanism = "";
@@ -56,7 +60,6 @@ public class MydataMechanism {
 
  private String getDecisionBlock() {
 
-  RuleType elseDecision = getElseDecision();
   String thenBlock = "";
   String elseBlock = "";
   if(null != modifiers)
@@ -69,12 +72,12 @@ public class MydataMechanism {
 
   if(thenBlock.isEmpty())
   {
-   thenBlock = thenBlock.concat("        <" + decision.getMydataDecision() + "/> \r\n");
+   thenBlock = thenBlock.concat("        <" + MyDataUtil.getMyDataDecision(ruleType) + "/> \r\n");
   }
 
   if(elseBlock.isEmpty())
   {
-   elseBlock = elseBlock.concat("        <" + elseDecision.getMydataDecision() + "/> \r\n");
+   elseBlock = elseBlock.concat("        <" + getElseDecision() + "/> \r\n");
   }
 
    if(null != pxps)
@@ -113,13 +116,13 @@ public class MydataMechanism {
 
  }
 
- private RuleType getElseDecision() {
-  if(decision.equals(RuleType.PERMISSION) || decision.equals(RuleType.OBLIGATION))
+ private String getElseDecision() {
+  if(ruleType.equals(RuleType.PERMISSION) || ruleType.equals(RuleType.OBLIGATION))
   {
-   return RuleType.PROHIBITION;
-  }else if (decision.equals(RuleType.PROHIBITION))
+   return MyDataUtil.getMyDataDecision(RuleType.PROHIBITION);
+  }else if (ruleType.equals(RuleType.PROHIBITION))
   {
-   return RuleType.PERMISSION;
+   return MyDataUtil.getMyDataDecision(RuleType.PERMISSION);
   }
   return null;
  }

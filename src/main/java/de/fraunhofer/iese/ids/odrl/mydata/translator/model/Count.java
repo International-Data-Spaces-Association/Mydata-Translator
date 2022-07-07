@@ -32,7 +32,7 @@ public class Count implements Operand {
   if(null != leftOperand)
   {
    return  "        <count> " + System.lineSeparator() +
-		   "          <eventOccurrence event='urn:action:"+ solution +":"+ leftOperand.getMydataLeftOperand() +"'> " + System.lineSeparator() +
+		   "          <eventOccurrence event='urn:action:"+ solution +":"+ leftOperand.getLabel() +"'> " + System.lineSeparator() +
            getParameters() +
            "          </eventOccurrence> " + System.lineSeparator() +
            "          <when fixedTime='"+ fixedTime.getFixedTime() +"'/> " + System.lineSeparator() +
