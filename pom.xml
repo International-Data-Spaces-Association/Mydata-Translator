@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.fraunhofer.iese.ids.odrl</groupId>
 	<artifactId>mydata-translator</artifactId>
-	<version>1.0.1-IM4</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<name>mydata translator</name>
 	<description>technical enforment translation to mydata policies from ids odrl policies</description>
 
@@ -23,7 +23,7 @@
 		<dependency>
 			<groupId>de.fraunhofer.iese.ids.odrl</groupId>
 			<artifactId>policy-library</artifactId>
-			<version>1.0.1-IM4</version>
+			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
 		<dependency>
