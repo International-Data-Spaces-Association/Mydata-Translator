@@ -7,9 +7,10 @@ import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.TimeUnit;
 
 public class BuildMydataPolicyUtils {
 
+	//static class
 	private BuildMydataPolicyUtils() {
-
 	}
+	
 	public static MydataPolicy buildPolicy(OdrlPolicy odrlPolicy, String solution) {
 		//set mydataPolicy id
 		String pid = "";
@@ -65,7 +66,7 @@ public class BuildMydataPolicyUtils {
 	public static String getName(String uri) {
 		// sample: http://example.com/policy/notify
 		String[] termSplit = uri.toString().split("/");
-		return termSplit[6];
+		return termSplit[termSplit.length-1];
 	}
 
 }

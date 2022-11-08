@@ -22,7 +22,7 @@ public class PIPBoolean {
 
 	@Override
 	public String toString() {
-		return "          <pip:boolean method='urn:info:" + solution + ":" + leftOperand.getMydataLeftOperand()
+		return "          <pip:boolean method='urn:info:" + solution + ":" + leftOperand.getLabel()
 				+ "' default='false'>" + System.lineSeparator() + getParameters() + "          </pip:boolean> "
 				+ System.lineSeparator();
 	}
