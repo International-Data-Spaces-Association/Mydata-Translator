@@ -26,7 +26,7 @@ public class DateTime {
 
     @Override
     public String toString() {
-        if(this.operator.equals(Operator.AFTER))
+        if(this.operator.equals(Operator.AFTER) || this.operator.equals(Operator.GTEQ) || this.operator.equals(Operator.GT))
         {
             return "          <or> \r\n" +
                     "            <and> \r\n" +
@@ -35,7 +35,7 @@ public class DateTime {
                     "            </and> \r\n" +
                     "            <date is='"+ operator.getMydataOp() +"' value='"+ getDate() +"'/> \r\n" +
                     "          </or> \r\n";
-        }else if(this.operator.equals(Operator.BEFORE))
+        }else if(this.operator.equals(Operator.BEFORE)|| this.operator.equals(Operator.LTEQ) || this.operator.equals(Operator.LT))
         {
             return "          <or> \r\n" +
                     "            <date is='"+ operator.getMydataOp() +"' value='"+ getDate() +"'/> \r\n" +
