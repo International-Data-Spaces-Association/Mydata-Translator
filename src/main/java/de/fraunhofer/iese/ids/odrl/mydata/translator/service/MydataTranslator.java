@@ -448,32 +448,179 @@ public class MydataTranslator implements ITranslator {
 	}
 
 	@Override
-	public ITranslateDuty translateNextPolicyDuty(OdrlPolicy odrlPolicy) {
+	public ITranslateDuty translateNextPolicyDuty(Rule odrlDuty) {
 		return null;
 	}
 
 	@Override
-	public ITranslateDuty translateInformDuty(OdrlPolicy odrlPolicy) {
-		return null;
+	public ITranslateDuty translateInformDuty(Rule odrlDuty) {
+		ActionType actionType = odrlDuty.getAction().getType();
+		List<Condition> odrlRefinements = odrlDuty.getAction().getRefinements();
+		List<Parameter> params = new ArrayList<>();
+		if (BuildMydataPolicyUtils.isNotNull(odrlRefinements) && !odrlRefinements.isEmpty()) {
+			for (Condition odrlRefinement : odrlRefinements) {
+				// list of recipients or informed parties
+//			if (odrlRefinement.getLeftOperand().equals(LeftOperand.INFORMEDPARTY)) {
+//				for(RightOperand rightOperand: odrlRefinement.getRightOperands()) {
+//					Parameter informedPartyParam = new Parameter(ParameterType.STRING, LeftOperand.INFORMEDPARTY.getLabel() + "-uri", rightOperand.getValue());
+//					params.add(informedPartyParam);
+//				}
+//			} else
+				if (odrlRefinement.getLeftOperand().equals(LeftOperand.RECIPIENT)) {
+					for (RightOperand rightOperand : odrlRefinement.getRightOperands()) {
+						Parameter recipientParam = new Parameter(ParameterType.STRING,
+								LeftOperand.RECIPIENT.getLabel() + "-uri", rightOperand.getValue());
+						params.add(recipientParam);
+					}
+				} else if (odrlRefinement.getLeftOperand().equals(LeftOperand.NOTIFICATION_LEVEL)) {
+					for (RightOperand rightOperand : odrlRefinement.getRightOperands()) {
+						Parameter notifLevelParam = new Parameter(ParameterType.STRING,
+								LeftOperand.NOTIFICATION_LEVEL.getLabel(), rightOperand.getValue());
+						params.add(notifLevelParam);
+					}
+				}
+				Operator op = odrlRefinement.getOperator();
+				if (op.equals(Operator.IN) || op.equals(Operator.IS_ANY_OF) || op.equals(Operator.IS_NONE_OF)
+						|| op.equals(Operator.IS_ALL_OF)) {
+					// pass the list operator as a parameter to the PIP, too!
+					Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+					params.add(operatorParam);
+				}
+			}
+		}
+		return new ExecuteAction(solution, actionType, params);
 	}
 
 	@Override
-	public ITranslateDuty translateLogDuty(OdrlPolicy odrlPolicy) {
-		return null;
+	public ITranslateDuty translateLogDuty(Rule odrlDuty) {
+		ActionType actionType = odrlDuty.getAction().getType();
+		List<Condition> odrlRefinements = odrlDuty.getAction().getRefinements();
+		List<Parameter> params = new ArrayList<>();
+		if (BuildMydataPolicyUtils.isNotNull(odrlRefinements) && !odrlRefinements.isEmpty()) {
+			for (Condition odrlRefinement : odrlRefinements) {
+				// list of system devices
+
+				if (odrlRefinement.getLeftOperand().equals(LeftOperand.SYSTEM_DEVICE)) {
+					for (RightOperand rightOperand : odrlRefinement.getRightOperands()) {
+						Parameter systemDeviceParam = new Parameter(ParameterType.STRING,
+								LeftOperand.SYSTEM_DEVICE.getLabel() + "-uri", rightOperand.getValue());
+						params.add(systemDeviceParam);
+					}
+				} else if (odrlRefinement.getLeftOperand().equals(LeftOperand.LOG_LEVEL)) {
+					for (RightOperand rightOperand : odrlRefinement.getRightOperands()) {
+						Parameter logLevelParam = new Parameter(ParameterType.STRING, LeftOperand.LOG_LEVEL.getLabel(),
+								rightOperand.getValue());
+						params.add(logLevelParam);
+					}
+				}
+				Operator op = odrlRefinement.getOperator();
+				if (op.equals(Operator.IN) || op.equals(Operator.IS_ANY_OF) || op.equals(Operator.IS_NONE_OF)
+						|| op.equals(Operator.IS_ALL_OF)) {
+					// pass the list operator as a parameter to the PIP, too!
+					Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
+					params.add(operatorParam);
+				}
+			}
+		}
+		return new ExecuteAction(solution, actionType, params);
 	}
 
 	@Override
-	public ITranslateDuty translateAnonymizeDuty(OdrlPolicy odrlPolicy) {
-		return null;
+	public ITranslateDuty translateAnonymizeDuty(Rule odrlDuty) {
+		ActionType actionType = odrlDuty.getAction().getType();
+		List<Condition> odrlRefinements = odrlDuty.getAction().getRefinements();
+		String eventParameterToModify = "DataObject";
+		List<Parameter> params = null;
+		String jsonPathQuery = "";
+		if (BuildMydataPolicyUtils.isNotNull(odrlRefinements) && !odrlRefinements.isEmpty()) {
+			for (Condition odrlRefinement : odrlRefinements) {
+				if (odrlRefinement.getLeftOperand().equals(LeftOperand.REPLACE_WITH)) {
+					ParameterType paramType = ParameterType.STRING;
+					if (odrlRefinement.getType().equals(RightOperandType.INTEGER)
+							|| odrlRefinement.getType().equals(RightOperandType.DECIMAL)) {
+						paramType = ParameterType.NUMBER;
+					}
+					// semantically, you can replace a field with only one value.
+					Parameter replaceWithParam = new Parameter(paramType, "replaceWith",
+							odrlRefinement.getRightOperands().get(0).getValue());
+					params = new ArrayList<>();
+					params.add(replaceWithParam);
+				}
+				if (odrlRefinement.getLeftOperand().equals(LeftOperand.JSON_PATH)) {
+					// Currently, the MYDATA modifier accepts only one JSON Path for a modification.
+					jsonPathQuery = odrlRefinement.getRightOperands().get(0).getValue();
+				}
+			}
+		}
+		return new Modify(eventParameterToModify, actionType, jsonPathQuery, params);
 	}
 
 	@Override
-	public ITranslateDuty translateDeleteDuty(OdrlPolicy odrlPolicy) {
-		return null;
+	public ITranslateDuty translateDeleteDuty(Rule odrlDuty) {
+		ActionType actionType = odrlDuty.getAction().getType();
+		List<Condition> odrlRefinements = odrlDuty.getAction().getRefinements();
+		List<Parameter> params = new ArrayList<>();
+		if (BuildMydataPolicyUtils.isNotNull(odrlRefinements) && !odrlRefinements.isEmpty()) {
+			for (Condition odrlRefinement : odrlRefinements) {
+				if (null != odrlRefinement) {
+					if (odrlRefinement.getLeftOperand().equals(LeftOperand.DELAY)) {
+						// semantically, the time conditions cannot get more than one right operand;
+						// time conflicts occurs.
+						for (RightOperandEntity entity : odrlRefinement.getRightOperands().get(0)
+								.getRightOperandEntities()) {
+							switch (entity.getEntityType()) {
+								case BEGIN:
+									RightOperandEntity beginInnerEntity = entity.getInnerEntity();
+									Parameter beginParam = new Parameter(ParameterType.STRING, "begin",
+											beginInnerEntity.getValue());
+									params.add(beginParam);
+									break;
+								case HASDURATION:
+									Parameter durationParam = new Parameter(ParameterType.STRING, "delay",
+											String.valueOf(entity.getValue()));
+									params.add(durationParam);
+									break;
+							}
+						}
+					} else if (odrlRefinement.getLeftOperand().equals(LeftOperand.DATE_TIME)) {
+
+						// semantically, the time conditions cannot get more than one right operand;
+						// time conflicts occurs.
+						for (RightOperandEntity entity : odrlRefinement.getRightOperands().get(0)
+								.getRightOperandEntities()) {
+							switch (entity.getEntityType()) {
+								case BEGIN:
+									RightOperandEntity beginInnerEntity = entity.getInnerEntity();
+									Parameter beginParam = new Parameter(ParameterType.STRING, "beginTime",
+											beginInnerEntity.getValue());
+									params.add(beginParam);
+									break;
+								case END:
+									RightOperandEntity endInnerEntity = entity.getInnerEntity();
+									Parameter endParam = new Parameter(ParameterType.STRING, "deadline",
+											endInnerEntity.getValue());
+									params.add(endParam);
+									break;
+								case DATETIME:
+									Parameter dateTimeParam = new Parameter(ParameterType.STRING, "dateTime",
+											entity.getValue());
+									params.add(dateTimeParam);
+									break;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (params.isEmpty()) {
+			return new ExecuteAction(solution, actionType, null);
+		}
+		return new ExecuteAction(solution, actionType, params);
 	}
 
 	@Override
-	public ITranslateDuty translateCountDuty(OdrlPolicy odrlPolicy) {
+	public ITranslateDuty translateCountDuty(Rule odrlDuty) {
 		return null;
 	}
 
@@ -483,7 +630,7 @@ public class MydataTranslator implements ITranslator {
 	}
 
 	@Override
-	public ITranslateDuty translateDuty(OdrlPolicy odrlPolicy) {
+	public ITranslateDuty translateDuty(Rule odrlDuty) {
 		return null;
 	}
 
@@ -662,7 +809,7 @@ public class MydataTranslator implements ITranslator {
 								case ANONYMIZE:
 								case REPLACE:
 								case DROP:
-									Modify anonymizeModifier = anonymizePreobligation(actionType, odrlRefinements);
+									Modify anonymizeModifier = (Modify) translateAnonymizeDuty(duty);
 									modifiers.add(anonymizeModifier);
 									break;
 								case NEXT_POLICY:
@@ -675,16 +822,16 @@ public class MydataTranslator implements ITranslator {
 									}
 									break;
 								case DELETE:
-									ExecuteAction deletePXP = deletePostobligation(actionType, odrlRefinements);
+									ExecuteAction deletePXP = (ExecuteAction) translateDeleteDuty(duty);
 									pxps.add(deletePXP);
 									break;
 								case INFORM:
 								case NOTIFY:
-									ExecuteAction informPXP = informPostobligation(actionType, odrlRefinements);
+									ExecuteAction informPXP = (ExecuteAction) translateInformDuty(duty);
 									pxps.add(informPXP);
 									break;
 								case LOG:
-									ExecuteAction logPXP = logPostobligation(actionType, odrlRefinements);
+									ExecuteAction logPXP = (ExecuteAction) translateLogDuty(duty);
 									pxps.add(logPXP);
 									break;
 								case INCREMENT_COUNTER:
@@ -765,164 +912,6 @@ public class MydataTranslator implements ITranslator {
 			params.add(operatorParam);
 		}
 		return new ExecuteAction(solution, nextpolicy, params);
-	}
-
-	private ExecuteAction informPostobligation(ActionType inform, List<Condition> odrlRefinements) {
-		List<Parameter> params = new ArrayList<>();
-		if (null != odrlRefinements) {
-			for (Condition odrlRefinement : odrlRefinements) {
-				// list of recipients or informed parties
-//			if (odrlRefinement.getLeftOperand().equals(LeftOperand.INFORMEDPARTY)) {
-//				for(RightOperand rightOperand: odrlRefinement.getRightOperands()) {
-//					Parameter informedPartyParam = new Parameter(ParameterType.STRING, LeftOperand.INFORMEDPARTY.getLabel() + "-uri", rightOperand.getValue());
-//					params.add(informedPartyParam);
-//				}
-//			} else
-				if (odrlRefinement.getLeftOperand().equals(LeftOperand.RECIPIENT)) {
-					for (RightOperand rightOperand : odrlRefinement.getRightOperands()) {
-						Parameter recipientParam = new Parameter(ParameterType.STRING,
-								LeftOperand.RECIPIENT.getLabel() + "-uri", rightOperand.getValue());
-						params.add(recipientParam);
-					}
-				} else if (odrlRefinement.getLeftOperand().equals(LeftOperand.NOTIFICATION_LEVEL)) {
-					for (RightOperand rightOperand : odrlRefinement.getRightOperands()) {
-						Parameter notifLevelParam = new Parameter(ParameterType.STRING,
-								LeftOperand.NOTIFICATION_LEVEL.getLabel(), rightOperand.getValue());
-						params.add(notifLevelParam);
-					}
-				}
-				Operator op = odrlRefinement.getOperator();
-				if (op.equals(Operator.IN) || op.equals(Operator.IS_ANY_OF) || op.equals(Operator.IS_NONE_OF)
-						|| op.equals(Operator.IS_ALL_OF)) {
-					// pass the list operator as a parameter to the PIP, too!
-					Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
-					params.add(operatorParam);
-				}
-			}
-		}
-		return new ExecuteAction(solution, inform, params);
-	}
-
-	private ExecuteAction logPostobligation(ActionType log, List<Condition> odrlRefinements) {
-		List<Parameter> params = new ArrayList<>();
-		if (null != odrlRefinements) {
-			for (Condition odrlRefinement : odrlRefinements) {
-				// list of system devices
-
-				if (odrlRefinement.getLeftOperand().equals(LeftOperand.SYSTEM_DEVICE)) {
-					for (RightOperand rightOperand : odrlRefinement.getRightOperands()) {
-						Parameter systemDeviceParam = new Parameter(ParameterType.STRING,
-								LeftOperand.SYSTEM_DEVICE.getLabel() + "-uri", rightOperand.getValue());
-						params.add(systemDeviceParam);
-					}
-				} else if (odrlRefinement.getLeftOperand().equals(LeftOperand.LOG_LEVEL)) {
-					for (RightOperand rightOperand : odrlRefinement.getRightOperands()) {
-						Parameter logLevelParam = new Parameter(ParameterType.STRING, LeftOperand.LOG_LEVEL.getLabel(),
-								rightOperand.getValue());
-						params.add(logLevelParam);
-					}
-				}
-				Operator op = odrlRefinement.getOperator();
-				if (op.equals(Operator.IN) || op.equals(Operator.IS_ANY_OF) || op.equals(Operator.IS_NONE_OF)
-						|| op.equals(Operator.IS_ALL_OF)) {
-					// pass the list operator as a parameter to the PIP, too!
-					Parameter operatorParam = new Parameter(ParameterType.STRING, "operator", op.getMydataOp());
-					params.add(operatorParam);
-				}
-			}
-		}
-		return new ExecuteAction(solution, log, params);
-
-	}
-
-	private Modify anonymizePreobligation(ActionType actionType, List<Condition> odrlRefinements) {
-
-		String eventParameterToModify = "DataObject";
-		List<Parameter> params = null;
-		String jsonPathQuery = "";
-		if (null != odrlRefinements) {
-			for (Condition odrlRefinement : odrlRefinements) {
-				if (odrlRefinement.getLeftOperand().equals(LeftOperand.REPLACE_WITH)) {
-					ParameterType paramType = ParameterType.STRING;
-					if (odrlRefinement.getType().equals(RightOperandType.INTEGER)
-							|| odrlRefinement.getType().equals(RightOperandType.DECIMAL)) {
-						paramType = ParameterType.NUMBER;
-					}
-					// semantically, you can replace a field with only one value.
-					Parameter replaceWithParam = new Parameter(paramType, "replaceWith",
-							odrlRefinement.getRightOperands().get(0).getValue());
-					params = new ArrayList<>();
-					params.add(replaceWithParam);
-				}
-				if (odrlRefinement.getLeftOperand().equals(LeftOperand.JSON_PATH)) {
-					// Currently, the MYDATA modifier accepts only one JSON Path for a modification.
-					jsonPathQuery = odrlRefinement.getRightOperands().get(0).getValue();
-				}
-			}
-		}
-		return new Modify(eventParameterToModify, actionType, jsonPathQuery, params);
-	}
-
-	private ExecuteAction deletePostobligation(ActionType delete, List<Condition> odrlRefinements) {
-		List<Parameter> params = new ArrayList<>();
-		if (null != odrlRefinements) {
-			for (Condition odrlRefinement : odrlRefinements) {
-				if (null != odrlRefinement) {
-					if (odrlRefinement.getLeftOperand().equals(LeftOperand.DELAY)) {
-						// semantically, the time conditions cannot get more than one right operand;
-						// time conflicts occurs.
-						for (RightOperandEntity entity : odrlRefinement.getRightOperands().get(0)
-								.getRightOperandEntities()) {
-							switch (entity.getEntityType()) {
-							case BEGIN:
-								RightOperandEntity beginInnerEntity = entity.getInnerEntity();
-								Parameter beginParam = new Parameter(ParameterType.STRING, "begin",
-										beginInnerEntity.getValue());
-								params.add(beginParam);
-								break;
-							case HASDURATION:
-								Parameter durationParam = new Parameter(ParameterType.STRING, "delay",
-										String.valueOf(entity.getValue()));
-								params.add(durationParam);
-								break;
-							}
-						}
-					} else if (odrlRefinement.getLeftOperand().equals(LeftOperand.DATE_TIME)) {
-
-						// semantically, the time conditions cannot get more than one right operand;
-						// time conflicts occurs.
-						for (RightOperandEntity entity : odrlRefinement.getRightOperands().get(0)
-								.getRightOperandEntities()) {
-							switch (entity.getEntityType()) {
-							case BEGIN:
-								RightOperandEntity beginInnerEntity = entity.getInnerEntity();
-								Parameter beginParam = new Parameter(ParameterType.STRING, "beginTime",
-										beginInnerEntity.getValue());
-								params.add(beginParam);
-								break;
-							case END:
-								RightOperandEntity endInnerEntity = entity.getInnerEntity();
-								Parameter endParam = new Parameter(ParameterType.STRING, "deadline",
-										endInnerEntity.getValue());
-								params.add(endParam);
-								break;
-							case DATETIME:
-								Parameter dateTimeParam = new Parameter(ParameterType.STRING, "dateTime",
-										entity.getValue());
-								params.add(dateTimeParam);
-								break;
-							}
-						}
-					}
-				}
-			}
-		}
-
-		if (params.isEmpty()) {
-			return new ExecuteAction(solution, delete, null);
-		}
-		return new ExecuteAction(solution, delete, params);
-
 	}
 
 	private ExecuteAction countPostobligation(ActionType count) {
