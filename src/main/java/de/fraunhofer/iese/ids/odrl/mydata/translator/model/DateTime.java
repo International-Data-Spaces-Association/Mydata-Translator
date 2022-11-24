@@ -3,11 +3,12 @@ package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+import de.fraunhofer.iese.ids.odrl.mydata.translator.interfaces.ICondition;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.Operator;
 import lombok.Data;
 
 @Data
-public class DateTime {
+public class DateTime implements ICondition {
 
     Operator operator;
     String dateTime;

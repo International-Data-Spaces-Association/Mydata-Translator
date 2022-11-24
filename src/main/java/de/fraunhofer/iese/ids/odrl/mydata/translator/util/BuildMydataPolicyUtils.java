@@ -69,6 +69,17 @@ public class BuildMydataPolicyUtils {
 		return termSplit[termSplit.length-1];
 	}
 
+	public static boolean isNull(Object o) {
+		return null == o;
+	}
+
+	public static boolean isNotNull(Object o) {
+		return null != o;
+	}
+
+	public static boolean isNullOrEmpty(String value) {
+		return (null == value || value.isEmpty());
+	}
 }
 
 
