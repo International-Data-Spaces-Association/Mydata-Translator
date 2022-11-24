@@ -563,50 +563,43 @@ public class MydataTranslator implements ITranslator {
 		if (BuildMydataPolicyUtils.isNotNull(odrlRefinements) && !odrlRefinements.isEmpty()) {
 			for (Condition odrlRefinement : odrlRefinements) {
 				if (null != odrlRefinement) {
-					if (odrlRefinement.getLeftOperand().equals(LeftOperand.DELAY)) {
-						// semantically, the time conditions cannot get more than one right operand;
-						// time conflicts occurs.
-						for (RightOperandEntity entity : odrlRefinement.getRightOperands().get(0)
-								.getRightOperandEntities()) {
-							switch (entity.getEntityType()) {
-								case BEGIN:
-									RightOperandEntity beginInnerEntity = entity.getInnerEntity();
-									Parameter beginParam = new Parameter(ParameterType.STRING, "begin",
-											beginInnerEntity.getValue());
-									params.add(beginParam);
-									break;
-								case HASDURATION:
-									Parameter durationParam = new Parameter(ParameterType.STRING, "delay",
-											String.valueOf(entity.getValue()));
-									params.add(durationParam);
-									break;
+					List<RightOperand> rightOperands = odrlRefinement.getRightOperands();
+					if(BuildMydataPolicyUtils.isNotNull(rightOperands.get(0)))
+					{
+						List<RightOperandEntity> rightOperandEntities = rightOperands.get(0).getRightOperandEntities();
+						if(BuildMydataPolicyUtils.isNotNull(rightOperandEntities) && !rightOperandEntities.isEmpty())
+						{
+							for (RightOperandEntity rightOperandEntity : rightOperandEntities) {
+								switch (rightOperandEntity.getEntityType()) {
+									case BEGIN:
+										RightOperandEntity beginInnerEntity = rightOperandEntity.getInnerEntity();
+										Parameter beginParam = new Parameter(ParameterType.STRING, "begin",
+												beginInnerEntity.getValue());
+										params.add(beginParam);
+										break;
+									case HASDURATION:
+										Parameter durationParam = new Parameter(ParameterType.STRING, "delay",
+												String.valueOf(rightOperandEntity.getValue()));
+										params.add(durationParam);
+										break;
+									case END:
+										RightOperandEntity endInnerEntity = rightOperandEntity.getInnerEntity();
+										Parameter endParam = new Parameter(ParameterType.STRING, "deadline",
+												endInnerEntity.getValue());
+										params.add(endParam);
+										break;
+									case DATETIME:
+										Parameter dateTimeParam = new Parameter(ParameterType.STRING, "dateTime",
+												rightOperandEntity.getValue());
+										params.add(dateTimeParam);
+										break;
+								}
 							}
-						}
-					} else if (odrlRefinement.getLeftOperand().equals(LeftOperand.DATE_TIME)) {
-
-						// semantically, the time conditions cannot get more than one right operand;
-						// time conflicts occurs.
-						for (RightOperandEntity entity : odrlRefinement.getRightOperands().get(0)
-								.getRightOperandEntities()) {
-							switch (entity.getEntityType()) {
-								case BEGIN:
-									RightOperandEntity beginInnerEntity = entity.getInnerEntity();
-									Parameter beginParam = new Parameter(ParameterType.STRING, "beginTime",
-											beginInnerEntity.getValue());
-									params.add(beginParam);
-									break;
-								case END:
-									RightOperandEntity endInnerEntity = entity.getInnerEntity();
-									Parameter endParam = new Parameter(ParameterType.STRING, "deadline",
-											endInnerEntity.getValue());
-									params.add(endParam);
-									break;
-								case DATETIME:
-									Parameter dateTimeParam = new Parameter(ParameterType.STRING, "dateTime",
-											entity.getValue());
-									params.add(dateTimeParam);
-									break;
-							}
+						}else{
+							String datetime = rightOperands.get(0).getValue();
+							Parameter durationParam = new Parameter(ParameterType.STRING, odrlRefinement.getLeftOperand().getOdrlLeftOperand(),
+									String.valueOf(datetime));
+							params.add(durationParam);
 						}
 					}
 				}
@@ -657,7 +650,7 @@ public class MydataTranslator implements ITranslator {
 						List<ExecuteAction> pxps = new ArrayList<>();
 						if (null != action.getRefinements()) {
 							for (Condition odrlRefinement : action.getRefinements()) {
-								if (odrlRefinement.getLeftOperand().equals(LeftOperand.DELAY)) {
+								if (odrlRefinement.getLeftOperand().equals(LeftOperand.DELAY_PERIOD)) {
 									List<Parameter> pipParams = new ArrayList<>();
 									// semantically, the time conditions cannot get more than one right operand;
 									// time conflicts occurs.
@@ -688,7 +681,7 @@ public class MydataTranslator implements ITranslator {
 										}
 									}
 
-									PIPBoolean delayPeriodPipBoolean = new PIPBoolean(solution, LeftOperand.DELAY,
+									PIPBoolean delayPeriodPipBoolean = new PIPBoolean(solution, LeftOperand.DELAY_PERIOD,
 											pipParams);
 									List<PIPBoolean> pips = mydataMechanism.getPipBooleans();
 									pips.add(delayPeriodPipBoolean);
