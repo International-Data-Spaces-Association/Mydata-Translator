@@ -20,8 +20,8 @@ public class MyDataUtil {
 		switch (ruleType) {
 			case PERMISSION :
 			case OBLIGATION	:
-			case PREDUTY : 
-			case POSTDUTY:
+			case PRE_DUTY :
+			case POST_DUTY:
 				return ALLOW;
 			case PROHIBITION :
 				return INHIBIT;

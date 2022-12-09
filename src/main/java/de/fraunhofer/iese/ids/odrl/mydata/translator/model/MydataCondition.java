@@ -1,17 +1,19 @@
 package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 
 
+import de.fraunhofer.iese.ids.odrl.mydata.translator.interfaces.ICondition;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.interfaces.IOperand;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.Operator;
 import lombok.Data;
 
 @Data
-public class MydataCondition {
+public class MydataCondition implements ICondition {
 
- Operand firstOperand;
+ IOperand firstOperand;
  Operator operator;
- Operand secondOperand;
+ IOperand secondOperand;
 
- public MydataCondition(Operand firstOperand, Operator operator, Operand secondOperand)
+ public MydataCondition(IOperand firstOperand, Operator operator, IOperand secondOperand)
  {
   this.firstOperand = firstOperand;
   this.operator = operator;

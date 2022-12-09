@@ -2,11 +2,12 @@ package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 
 import java.util.List;
 
+import de.fraunhofer.iese.ids.odrl.mydata.translator.interfaces.PIP;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.LeftOperand;
 import lombok.Data;
 
 @Data
-public class PIPBoolean {
+public class PIPBoolean implements PIP {
 	String solution;
 	LeftOperand leftOperand;
 	List<Parameter> parameters;

@@ -3,12 +3,13 @@ package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 
 import java.util.List;
 
+import de.fraunhofer.iese.ids.odrl.mydata.translator.interfaces.IOperand;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ActionType;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.LeftOperand;
 import lombok.Data;
 
 @Data
-public class Count implements Operand {
+public class Count implements IOperand {
  String solution;
  LeftOperand leftOperand;
  List<Parameter> parameters;
