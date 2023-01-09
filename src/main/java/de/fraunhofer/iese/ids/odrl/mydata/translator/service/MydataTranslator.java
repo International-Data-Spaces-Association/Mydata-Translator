@@ -739,6 +739,7 @@ public class MydataTranslator implements ITranslator {
 								addConditionToMechanism(mydataMechanism, eventCondition);
 								break;
 							case ABSOLUTE_SPATIAL_POSITION:
+							case SPATIAL:
 								MydataCondition locationCondition = (MydataCondition) this.translateAbsoluteSpatialPositionConstraint(odrlConstraint);
 								addConditionToMechanism(mydataMechanism, locationCondition);
 								break;
