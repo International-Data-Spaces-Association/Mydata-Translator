@@ -3,12 +3,13 @@ package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 
 import java.util.List;
 
+import de.fraunhofer.iese.ids.odrl.mydata.translator.interfaces.IOperand;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ActionType;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.LeftOperand;
 import lombok.Data;
 
 @Data
-public class Count implements Operand {
+public class Count implements IOperand {
  String solution;
  LeftOperand leftOperand;
  List<Parameter> parameters;
@@ -32,7 +33,7 @@ public class Count implements Operand {
   if(null != leftOperand)
   {
    return  "        <count> " + System.lineSeparator() +
-		   "          <eventOccurrence event='urn:action:"+ solution +":"+ leftOperand.getMydataLeftOperand() +"'> " + System.lineSeparator() +
+		   "          <eventOccurrence event='urn:action:"+ solution +":"+ leftOperand.getLabel() +"'> " + System.lineSeparator() +
            getParameters() +
            "          </eventOccurrence> " + System.lineSeparator() +
            "          <when fixedTime='"+ fixedTime.getFixedTime() +"'/> " + System.lineSeparator() +

@@ -2,11 +2,12 @@ package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 
 import java.util.List;
 
+import de.fraunhofer.iese.ids.odrl.mydata.translator.interfaces.PIP;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.LeftOperand;
 import lombok.Data;
 
 @Data
-public class PIPBoolean {
+public class PIPBoolean implements PIP {
 	String solution;
 	LeftOperand leftOperand;
 	List<Parameter> parameters;
@@ -22,7 +23,7 @@ public class PIPBoolean {
 
 	@Override
 	public String toString() {
-		return "          <pip:boolean method='urn:info:" + solution + ":" + leftOperand.getMydataLeftOperand()
+		return "          <pip:boolean method='urn:info:" + solution + ":" + leftOperand.getLabel()
 				+ "' default='false'>" + System.lineSeparator() + getParameters() + "          </pip:boolean> "
 				+ System.lineSeparator();
 	}

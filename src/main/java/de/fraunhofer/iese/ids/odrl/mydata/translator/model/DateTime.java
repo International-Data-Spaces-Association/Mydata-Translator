@@ -3,13 +3,14 @@ package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.IntervalCondition;
+import de.fraunhofer.iese.ids.odrl.mydata.translator.interfaces.ICondition;
+import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.Operator;
 import lombok.Data;
 
 @Data
-public class DateTime {
+public class DateTime implements ICondition {
 
-    IntervalCondition is;
+    Operator operator;
     String dateTime;
     ZonedDateTime zonedDateTime;
     DateTimeFormatter mydataDateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
@@ -18,30 +19,30 @@ public class DateTime {
     public DateTime() {
     }
 
-    public DateTime(IntervalCondition interval, String dateTime) {
-        this.is = interval;
+    public DateTime(Operator operator, String dateTime) {
+        this.operator = operator;
         this.dateTime = dateTime;
         this.zonedDateTime = ZonedDateTime.parse(dateTime);
     }
 
     @Override
     public String toString() {
-        if(this.is.equals(IntervalCondition.GT))
+        if(this.operator.equals(Operator.AFTER) || this.operator.equals(Operator.GTEQ) || this.operator.equals(Operator.GT))
         {
             return "          <or> \r\n" +
                     "            <and> \r\n" +
                     "              <date is='exactly' value='"+ getDate() +"'/> \r\n" +
-                    "              <time is='"+ is.getMydataInterval() +"' value='"+ getTime() +"'/> \r\n" +
+                    "              <time is='"+ operator.getMydataOp() +"' value='"+ getTime() +"'/> \r\n" +
                     "            </and> \r\n" +
-                    "            <date is='"+ is.getMydataInterval() +"' value='"+ getDate() +"'/> \r\n" +
+                    "            <date is='"+ operator.getMydataOp() +"' value='"+ getDate() +"'/> \r\n" +
                     "          </or> \r\n";
-        }else if(this.is.equals(IntervalCondition.LT))
+        }else if(this.operator.equals(Operator.BEFORE)|| this.operator.equals(Operator.LTEQ) || this.operator.equals(Operator.LT))
         {
             return "          <or> \r\n" +
-                    "            <date is='"+ is.getMydataInterval() +"' value='"+ getDate() +"'/> \r\n" +
+                    "            <date is='"+ operator.getMydataOp() +"' value='"+ getDate() +"'/> \r\n" +
                     "            <and> \r\n" +
                     "              <date is='exactly' value='"+ getDate() +"'/> \r\n" +
-                    "              <time is='"+ is.getMydataInterval() +"' value='"+ getTime() +"'/> \r\n" +
+                    "              <time is='"+ operator.getMydataOp() +"' value='"+ getTime() +"'/> \r\n" +
                     "            </and> \r\n" +
                     "          </or> \r\n";
         }

@@ -1,9 +1,10 @@
 package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 
+import de.fraunhofer.iese.ids.odrl.mydata.translator.interfaces.IOperand;
 import lombok.Data;
 
 @Data
-public class Constant implements Operand {
+public class Constant implements IOperand {
 
     ParameterType type;
     String value;

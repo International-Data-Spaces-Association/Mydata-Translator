@@ -1,37 +1,42 @@
 package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
+import de.fraunhofer.iese.ids.odrl.mydata.translator.util.MyDataUtil;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ActionType;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.RuleType;
 import lombok.Data;
 
-import java.util.ArrayList;
-
 @Data
 public class MydataMechanism {
- ArrayList<MydataCondition> conditions;
- ArrayList<PIPBoolean> pipBooleans;
- ArrayList<DateTime> dateTimes;
+ List<MydataCondition> conditions;
+ List<PIPBoolean> pipBooleans;
+ List<DateTime> dateTimes;
  String solution;
  ActionType action;
- RuleType decision;
- ArrayList<ExecuteAction> pxps;
+ RuleType ruleType;
+ List<ExecuteAction> pxps;
  boolean hasDuty;
- ArrayList<Modify> modifiers;
+ List<Modify> modifiers;
  String target;
 
- public MydataMechanism(String solution, ActionType action, RuleType decision, boolean hasDuty, ArrayList<Modify> modifiers)
+ public MydataMechanism(String solution, ActionType action, RuleType ruleType, boolean hasDuty, List<Modify> modifiers)
  {
-  this.conditions = new ArrayList<>();
-  this.pipBooleans = new ArrayList<>();
-  this.dateTimes = new ArrayList<>();
   this.solution = solution;
   this.action = action;
-  this.decision = decision;
+  this.ruleType = ruleType;
   this.hasDuty = hasDuty;
   this.modifiers = modifiers;
+  init();
  }
 
+ private void init() {
+	  this.conditions = new ArrayList<>();
+	  this.pipBooleans = new ArrayList<>();
+	  this.dateTimes = new ArrayList<>();
+ }
  @Override
  public String toString() {
 		String mydataMechanism = "";
@@ -64,8 +69,17 @@ public class MydataMechanism {
     thenBlock = thenBlock.concat("\r\n" + modifier.toString());
    }
   }
-  //if(decision.equals(RuleType.OBLIGATION) || (decision.equals(RuleType.PERMISSION) && this.hasDuty))
-  //{
+
+  if(thenBlock.isEmpty())
+  {
+   thenBlock = thenBlock.concat("        <" + MyDataUtil.getMyDataDecision(ruleType) + "/> \r\n");
+  }
+
+  if(elseBlock.isEmpty())
+  {
+   elseBlock = elseBlock.concat("        <" + getElseDecision() + "/> \r\n");
+  }
+
    if(null != pxps)
    {
     for (ExecuteAction pxp: this.pxps)
@@ -87,15 +101,7 @@ public class MydataMechanism {
     }
    }
 
-  //}
-  return getDecision(thenBlock, elseBlock);
-
- }
-
- private String getDecision(String thenBlock, String elseBlock) {
-  RuleType elseDecision = getElseDecision();
-  return  "        <then> \n"
-          + "        <" + decision.getMydataDecision() + "/> \n"
+  return  "        <then> \r\n"
           + thenBlock
           + "        </then>  \r\n"
           + "      </if>   \r\n"
@@ -104,19 +110,19 @@ public class MydataMechanism {
           + "        <event:string eventParameter='TargetDataUri' default=''/>\n"
           + "      </equals>\n"
           + "      <then>\n"
-          + "          <" + elseDecision.getMydataDecision() + "/>  \r\n"
           + elseBlock
           + "      </then>\n"
           + "    </elseif>\n" ;
+
  }
 
- private RuleType getElseDecision() {
-  if(decision.equals(RuleType.PERMISSION) || decision.equals(RuleType.OBLIGATION))
+ private String getElseDecision() {
+  if(ruleType.equals(RuleType.PERMISSION) || ruleType.equals(RuleType.OBLIGATION))
   {
-   return RuleType.PROHIBITION;
-  }else if (decision.equals(RuleType.PROHIBITION))
+   return MyDataUtil.getMyDataDecision(RuleType.PROHIBITION);
+  }else if (ruleType.equals(RuleType.PROHIBITION))
   {
-   return RuleType.PERMISSION;
+   return MyDataUtil.getMyDataDecision(RuleType.PERMISSION);
   }
   return null;
  }

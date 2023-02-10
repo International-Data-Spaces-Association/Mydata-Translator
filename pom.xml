@@ -4,13 +4,13 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.fraunhofer.iese.ids.odrl</groupId>
 	<artifactId>mydata-translator</artifactId>
-	<version>1.0.0</version>
+	<version>2.0.0</version>
 	<name>mydata translator</name>
 	<description>technical enforment translation to mydata policies from ids odrl policies</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<java.version>1.8</java.version>
+		<java.version>11</java.version>
 	</properties>
 
 	<dependencies>
@@ -23,13 +23,7 @@
 		<dependency>
 			<groupId>de.fraunhofer.iese.ids.odrl</groupId>
 			<artifactId>policy-library</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
-		<dependency>
-			<groupId>javax.xml.bind</groupId>
-			<artifactId>jaxb-api</artifactId>
-			<version>2.3.1</version>
+			<version>2.0.0</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -67,10 +61,13 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.0</version>
 				<configuration>
-					<target>${java.version}</target>
-					<source>${java.version}</source>
-					<!-- <release>${java.version}</release> -->
+					<release>${java.version}</release>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.amashchenko.maven.plugin</groupId>
+				<artifactId>gitflow-maven-plugin</artifactId>
+				<version>1.19.0</version>
 			</plugin>
 		</plugins>
 	</build>

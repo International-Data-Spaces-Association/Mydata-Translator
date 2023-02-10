@@ -2,12 +2,12 @@ package de.fraunhofer.iese.ids.odrl.mydata.translator.model;
 
 import java.util.List;
 
+import de.fraunhofer.iese.ids.odrl.mydata.translator.interfaces.IDuty;
 import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ActionType;
-import de.fraunhofer.iese.ids.odrl.policy.library.model.enums.ModificationMethod;
 import lombok.Data;
 
 @Data
-public class Modify implements Operand {
+public class Modify implements IDuty {
 
     String eventParameter;
     ActionType modifyAction;
